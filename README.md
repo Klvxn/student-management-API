@@ -4,9 +4,12 @@
 ### It includes endpoints for <br>
 
 
-1. #### JWT Authentication
+<ul>
 
-2. #### Admin only operations
+#### <li> JWT Authentication </li>
+
+
+#### <li> Admin only operations </li>
 <ul>
   <li> Sign up  </li>
   <li> Create accounts for students and generate school ID for them </li>
@@ -20,7 +23,7 @@
 When teachers or students accounts are created by the admin, a default password is set. Students can then use the generated school ID and teachers their email address to log in.
 
 
-3. #### Student related operations
+#### <li> Student related operations </li>
 <ul>
   <li> Login using their school ID and password  </li>
   <li> View their profile  </li>
@@ -28,9 +31,10 @@ When teachers or students accounts are created by the admin, a default password 
   <li> View their grade in all registered courses and their GPA </li>
 </ul>
 
-4. #### Teacher related operations
+#### <li> Teacher related operations </li>
 <ul>
   <li> Login using their email address and password </li>
   <li> View their profile and the course they're handling </li>
   <li> Grade a student in the course they are registered to. </li>
+</ul>
 </ul>
