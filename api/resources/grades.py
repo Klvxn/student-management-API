@@ -86,7 +86,7 @@ class GradeRetrieveUpdate(Resource):
         if student not in course.students:
             error_msg = "This student did not register for this course"
 
-        # Try to catch any database error in case the student has already been graded
+        # Catch any database error in case the student has already been graded
         try:
             grade = Grade(student=student, course=course, score=score)
             grade.allocate_letter_grade()

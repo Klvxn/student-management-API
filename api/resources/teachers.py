@@ -1,13 +1,12 @@
 from http import HTTPStatus
 
-from flask_restx import Namespace, Resource, fields, marshal
+from flask_restx import Namespace, Resource, abort, fields, marshal
 from flask_jwt_extended import current_user, get_jwt, jwt_required
 from werkzeug.security import generate_password_hash
 
 from ..models.teachers import Teacher
 from ..models.users import User
 from ..util import admin_required
-
 
 teacher_ns = Namespace("Teachers", "The teacher namespace")
 
@@ -54,19 +53,19 @@ class TeacherListCreate(Resource):
         if teacher is not None:
             error_msg = f"Teacher with email address: {email_address} already exists"
 
-        # Create a new teacher and set a default password if no error message
-        if not error_msg:
-            user = User()
-            new_teacher = Teacher(full_name=full_name, email_address=email_address)
-            user.teacher = new_teacher
-            default_password = "teacherpassword123"
-            user.password_hash = generate_password_hash(default_password)
-            user.role = "TEACHER"
-            user.save()
-            new_teacher.save()
-            return marshal(new_teacher, teacher_model), HTTPStatus.CREATED
+        # abort if there's error message else create a new teacher with a default password
+        if error_msg:
+            abort(400, msg=error_msg)
 
-        return {"msg": error_msg}, HTTPStatus.BAD_REQUEST
+        user = User()
+        new_teacher = Teacher(full_name=full_name, email_address=email_address)
+        user.teacher = new_teacher
+        default_password = "teacherpassword123"
+        user.password_hash = generate_password_hash(default_password)
+        user.role = "TEACHER"
+        user.save()
+        new_teacher.save()
+        return marshal(new_teacher, teacher_model), HTTPStatus.CREATED
 
 
 @teacher_ns.route("/<int:teacher_id>/")
@@ -83,12 +82,11 @@ class TeacherRetrieveUpdateDelete(Resource):
         claims = get_jwt()
         teacher = Teacher.query.get_or_404(teacher_id)
 
+        # Grant access to teacher or admin
         if current_user == teacher.user or claims.get("ADMIN"):
-
             return marshal(teacher, teacher_model), HTTPStatus.OK
 
-        msg = "You don't have access to this resource"
-        return {"msg": msg}, HTTPStatus.FORBIDDEN
+        abort(403, msg="You don't have access to this resource")
 
     @teacher_ns.marshal_with(teacher_model)
     @teacher_ns.expect(teacher_model)

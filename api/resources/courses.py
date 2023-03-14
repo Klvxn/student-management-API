@@ -75,7 +75,6 @@ class CourseList(Resource):
         return marshal(new_course, course_model), HTTPStatus.CREATED
 
 
-
 @course_ns.route("/<int:course_id>/")
 class CourseRetrieveUpdateDelete(Resource):
 
