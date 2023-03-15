@@ -10,6 +10,7 @@ from .models.users import Admin
 from .models.students import Student
 from .models.teachers import Teacher
 from .resources.auth import auth_ns
+from .resources.admin import admin_ns
 from .resources.courses import course_ns
 from .resources.grades import grade_ns
 from .resources.students import student_ns
@@ -50,6 +51,7 @@ def create_app(stage):
         catch_all_404s=True
     )
 
+    api.add_namespace(admin_ns, path="/admin")
     api.add_namespace(auth_ns, path="/auth")
     api.add_namespace(course_ns, path="/courses")
     api.add_namespace(grade_ns, path="/grade")

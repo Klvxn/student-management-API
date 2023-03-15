@@ -29,7 +29,7 @@ signup_model = admin_model.model(
         "confirm_password": fields.String(write_only=True),
     },
 )
-@admin_ns.route("/admin/signup/")
+@admin_ns.route("/signup/")
 class AdminSignUp(Resource):
 
     @admin_ns.expect(signup_model)

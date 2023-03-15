@@ -26,15 +26,6 @@ login = auth_ns.model(
         "password": fields.String(),
     },
 )
-user_model = auth_ns.model(
-    "User model",
-    {
-        "id": fields.Integer(),
-        "full_name": fields.String(),
-        "email_address": fields.String(),
-        "role": fields.String(),
-    }
-)
 new_password = auth_ns.model("New password", {"new_password": fields.String()})
 
 
