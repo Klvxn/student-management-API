@@ -8,7 +8,7 @@ from flask_jwt_extended import (
     get_jwt,
     jwt_required
 )
-from flask_restx import Namespace, Resource, abort, fields, marshal
+from flask_restx import Namespace, Resource, abort, fields
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from ..models.students import Student
@@ -18,14 +18,6 @@ from ..util import BLOCKLIST
 
 auth_ns = Namespace("Authentication", "Authentication related operations")
 
-signup = auth_ns.model(
-    "Sign Up serializer",
-    {
-        "email_address": fields.String(),
-        "password": fields.String(),
-        "confirm_password": fields.String(),
-    },
-)
 login = auth_ns.model(
     "Login serializer",
     {
@@ -44,34 +36,6 @@ user_model = auth_ns.model(
     }
 )
 new_password = auth_ns.model("New password", {"new_password": fields.String()})
-
-
-@auth_ns.route("/admin/signup/")
-class AdminSignUp(Resource):
-
-    @auth_ns.expect(signup)
-    def post(self):
-        """
-        Admin sign up
-        """
-        data = request.get_json()
-        full_name = data["full_name"]
-        email = data["email_address"]
-        password = data["password"]
-        confirm_password = data["confirm_password"]
-
-        if confirm_password and password == confirm_password:
-            password = generate_password_hash(confirm_password)
-            new_admin = Admin(
-                email_address=email,
-                full_name=full_name,
-                password_hash=password,
-                role="ADMIN"
-            )
-            new_admin.save()
-            return marshal(new_admin, user_model), HTTPStatus.CREATED
-
-        abort(400, msg="Invalid password. Check your password and try again")
 
 
 @auth_ns.route("/login/")
