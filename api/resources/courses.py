@@ -24,7 +24,7 @@ course_model = course_ns.model(
 course_register_model = course_ns.model(
     "Course register model",
     {
-        "title": fields.String(required=True),
+        "course_title": fields.String(required=True),
         "school_id": fields.String(required=True),
     },
 )
@@ -135,19 +135,35 @@ class CourseRegister(Resource):
         Register a student for a course
         """
         data = course_ns.payload
-        course_title = data["title"]
+        course_title = data["course_title"]
         school_id = data["school_id"]
 
-        course = Course.get_by_title(course_title)
         student = Student.get_by_school_id(school_id)
 
-        # Check that the student is not yet registered to the course else return a message
-        if student in course.students:
-            abort(400, msg="This student already enrolled for this course")
+        if isinstance(course_title, list):
+            for title in course_title:
+                course = Course.get_by_title(title)
 
-        course.students.append(student)
-        course.commit_update()
-        return marshal(course, course_register_model), HTTPStatus.CREATED
+                # Abort if a student has already registered for the course
+                if student in course.students:
+                    abort(400, msg=f"This student already enrolled for {course.title}")
+
+                course.students.append(student)
+                course.commit_update()
+
+        else:
+            course = Course.get_by_title(course_title)
+
+            if student in course.students:
+                abort(400, msg=f"This student already enrolled for {course.title}")
+
+            course.students.append(student)
+            course.commit_update()
+
+        return (
+            {"msg": f"Student: {school_id} has registered for {course_title}"},
+            HTTPStatus.CREATED
+        )
 
 
     @course_ns.expect(course_register_model)
@@ -158,7 +174,7 @@ class CourseRegister(Resource):
         Unregister a student from a course
         """
         data = request.get_json()
-        course_title = data["title"]
+        course_title = data["course_title"]
         school_id = data["school_id"]
 
         course = Course.get_by_title(course_title)
@@ -170,5 +186,4 @@ class CourseRegister(Resource):
 
         course.students.remove(student)
         course.commit_update()
-        msg = "Student unregistered."
-        return {"msg": msg}, HTTPStatus.NO_CONTENT
+        return {"msg": "Student unregistered."}, HTTPStatus.NO_CONTENT

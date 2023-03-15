@@ -20,6 +20,7 @@
   <li> Delete a student, teacher or course, etc. </li>
 </ul>
 
+<br>
 When teachers or students accounts are created by the admin, a default password is set. Students can then use the generated school ID and teachers their email address to log in.
 
 

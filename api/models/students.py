@@ -1,19 +1,15 @@
 from datetime import date
 
-from api.database import db
-from api.models.grades import Grade
+from .users import User
+from .grades import Grade
+from ..database import db
 
 
-class Student(db.Model):
+class Student(User):
 
     id = db.Column(db.Integer, primary_key=True)
     school_id = db.Column(db.String(), index=True, unique=True)
-    full_name = db.Column(db.String(10), nullable=False)
-    email_address = db.Column(db.String(20), nullable=False, unique=True)
-    gpa = db.Column(db.Float(precision=2, asdecimal=True))
-
-    # One-to-one relationship with user model
-    user = db.relationship("User", backref="student", uselist=False)
+    gpa = db.Column(db.Float(asdecimal=True), default=0.00)
 
     def __repr__(self) -> str:
         return f"<Student: {self.full_name}>"
@@ -43,7 +39,7 @@ class Student(db.Model):
         first_name = full_name.split()[0]
         hashed_name = hash(full_name)
         num = abs(hashed_name) % 1000000
-        school_id = first_name.upper() + str(num) + "/" + str(date.today().year)
+        school_id = f"ALT/{first_name.upper()}{num}/{date.today().year}"
         return school_id
 
     def calculate_student_gpa(self):

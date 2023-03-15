@@ -44,7 +44,7 @@ class GradeRetrieveUpdate(Resource):
         course = Course.query.get_or_404(course_id)
         current_user = get_current_user()
 
-        if course.teacher != current_user.teacher:
+        if course.teacher != current_user:
             abort (403, msg="Only the course teacher can perform this action")
 
         grade = Grade.query.get_or_404((student_id, course_id))
@@ -77,7 +77,7 @@ class GradeRetrieveUpdate(Resource):
         current_user = get_current_user()
 
 
-        if course_teacher != current_user.teacher:
+        if course_teacher != current_user:
             abort(403, "Only the course teacher can perform this action")
 
         error_msg = None
@@ -122,7 +122,7 @@ class GradeRetrieveUpdate(Resource):
         course = Course.query.get_or_404(course_id)
         current_user = get_current_user()
 
-        if course.teacher != current_user.teacher:
+        if course.teacher != current_user:
             abort(403, msg="Only the course teacher can perform this action")
 
         grade = Grade.query.get_or_404((student_id, course_id))

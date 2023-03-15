@@ -1,13 +1,12 @@
 from http import HTTPStatus
 
-from flask_jwt_extended import get_current_user, get_jwt, jwt_required
+from flask_jwt_extended import jwt_required
 from flask_restx import Namespace, Resource, abort, fields, marshal
 from werkzeug.security import generate_password_hash
 
 from ..models.grades import Grade
 from ..models.students import Student
-from ..models.users import User
-from ..util import admin_required
+from ..util import admin_required, is_student_or_admin
 
 
 student_ns = Namespace("Students", "The student namespace")
@@ -64,13 +63,13 @@ class StudentListCreate(Resource):
         if error_msg:
             abort(400, msg=error_msg)
 
-        user = User()
-        new_student = Student(full_name=full_name, email_address=email_address)
-        user.student = new_student
+        new_student = Student(
+            full_name=full_name,
+            email_address=email_address,
+            role="STUDENT"
+        )
         default_password = "password123"
-        user.password_hash = generate_password_hash(default_password)
-        user.role = "STUDENT"
-        user.save()
+        new_student.password_hash = generate_password_hash(default_password)
         new_student.save()
         return marshal(new_student, student_model), HTTPStatus.CREATED
 
@@ -88,15 +87,14 @@ class StudentRetrieveUpdateDelete(Resource):
         """
         Retrieve a student
         """
-        claims = get_jwt()
         student = Student.query.get_or_404(student_id)
-        current_user = get_current_user()
 
         # Allow access to the student or the admin
-        if student.user == current_user or claims.get("ADMIN"):
-            return marshal(student, student_model), HTTPStatus.OK
+        if not is_student_or_admin(student_id):
+            abort(403, msg="You don't access to this resource")
 
-        abort(403, msg="You don't access to this resource")
+        return marshal(student, student_model), HTTPStatus.OK
+
 
     @student_ns.marshal_with(student_model)
     @student_ns.expect(student_model)
@@ -142,22 +140,21 @@ class StudentCoursesRetrieve(Resource):
         """
         Get a student's registered courses
         """
-        claims = get_jwt()
 
         # Allow access to the student or admin only
         student = Student.query.get_or_404(student_id)
-        current_user = get_current_user()
 
-        if student.user == current_user or claims.get("ADMIN"):
-            data = {
-                "student": student.full_name,
-                "enrolled_courses": [
-                    course.title for course in student.courses if student.courses
-                ],
-            }
-            return data, HTTPStatus.OK
+        if not is_student_or_admin(student_id):
+            abort (403, msg="You don't access to this resource")
 
-        abort (403, msg="You don't access to this resource")
+        data = {
+            "student": student.full_name,
+            "enrolled_courses": [
+                course.title for course in student.courses if student.courses
+            ],
+        }
+        return data, HTTPStatus.OK
+
 
 
 @student_ns.route("/<int:student_id>/result/")
@@ -173,23 +170,22 @@ class StudentResultRetrieve(Resource):
         """
         Get a student's result
         """
-        claims = get_jwt()
         student = Student.query.get_or_404(student_id)
-        current_user = get_current_user()
+
+        if not is_student_or_admin(student_id):
+            abort (403, msg="You don't access to this resource")
 
         # Allow access to the student or admin
-        if student.user == current_user or claims.get("ADMIN"):
-            results = {}
-            course_results = []
+        results = {}
+        course_results = []
 
-            for course in student.courses:
-                grade = Grade.query.get((student.id, course.id))
-                result = {"course_title": course.title, "grade": grade.letter_grade}
-                course_results.append(result)
+        for course in student.courses:
+            grade = Grade.query.get((student.id, course.id))
+            result = {"course_title": course.title, "grade": grade.letter_grade}
+            course_results.append(result)
 
-            results["course_results"] = course_results
-            results["GPA"] = student.calculate_student_gpa()
+        results["course_results"] = course_results
+        results["GPA"] = student.calculate_student_gpa()
 
-            return {"result": results}, HTTPStatus.OK
+        return {"result": results}, HTTPStatus.OK
 
-        abort (403, msg="You don't access to this resource")

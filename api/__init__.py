@@ -6,7 +6,9 @@ from werkzeug.exceptions import NotFound
 
 from config import STAGE
 from .database import db
-from .models.users import User
+from .models.users import Admin
+from .models.students import Student
+from .models.teachers import Teacher
 from .resources.auth import auth_ns
 from .resources.courses import course_ns
 from .resources.grades import grade_ns
@@ -18,7 +20,8 @@ def create_app(stage):
 
     app = Flask(__name__)
 
-    app.config.from_object(STAGE[stage])
+    config = STAGE[stage]
+    app.config.from_object(config)
 
     db.init_app(app)
     with app.app_context():
@@ -60,12 +63,11 @@ def create_app(stage):
 
     @jwt.user_lookup_loader
     def user_lookup_callback(_jwt_header, jwt_data):
+        print(jwt_data)
         identity = jwt_data["sub"]
-        return User.query.filter_by(id=identity).first()
-
-    @jwt.additional_claims_loader
-    def add_claims_to_jwt(identity):
-        user = User.query.get(identity)
-        return {user.role: True}
+        role = jwt_data["role"]
+        if role == "ADMIN": return Admin.query.get(identity)
+        elif role == "TEACHER": return Teacher.query.get(identity)
+        else: return Student.query.get(identity)
 
     return app

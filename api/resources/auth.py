@@ -13,7 +13,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from ..models.students import Student
 from ..models.teachers import Teacher
-from ..models.users import Admin, User
+from ..models.users import Admin
 from ..util import BLOCKLIST
 
 auth_ns = Namespace("Authentication", "Authentication related operations")
@@ -38,6 +38,7 @@ user_model = auth_ns.model(
     "User model",
     {
         "id": fields.Integer(),
+        "full_name": fields.String(),
         "email_address": fields.String(),
         "role": fields.String(),
     }
@@ -46,7 +47,7 @@ new_password = auth_ns.model("New password", {"new_password": fields.String()})
 
 
 @auth_ns.route("/admin/signup/")
-class UserSignUp(Resource):
+class AdminSignUp(Resource):
 
     @auth_ns.expect(signup)
     def post(self):
@@ -54,19 +55,21 @@ class UserSignUp(Resource):
         Admin sign up
         """
         data = request.get_json()
+        full_name = data["full_name"]
         email = data["email_address"]
         password = data["password"]
         confirm_password = data["confirm_password"]
 
         if confirm_password and password == confirm_password:
-            user = User()
-            new_admin = Admin(email_address=email)
-            user.admin = new_admin
-            user.password_hash = generate_password_hash(confirm_password)
-            user.role = "ADMIN"
-            user.save()
+            password = generate_password_hash(confirm_password)
+            new_admin = Admin(
+                email_address=email,
+                full_name=full_name,
+                password_hash=password,
+                role="ADMIN"
+            )
             new_admin.save()
-            return marshal(new_admin, user_model), HTTPStatus.ACCEPTED
+            return marshal(new_admin, user_model), HTTPStatus.CREATED
 
         abort(400, msg="Invalid password. Check your password and try again")
 
@@ -92,8 +95,7 @@ class Login(Resource):
 
         # Get the student if the school ID was provided
         if school_id:
-            student = Student.get_by_school_id(school_id)
-            user = student.user
+            user = Student.get_by_school_id(school_id)
 
         # Check if the email provided belongs to an admin or teacher
         else:
@@ -104,17 +106,17 @@ class Login(Resource):
             if not (admin or teacher):
                 abort(404, msg=f"User with email address: {email_address} not found")
 
-            user = teacher.user if teacher else admin.user
+            user = teacher if teacher else admin
 
         # Check the user against the provided password and create access and refresh tokens
         if user and check_password_hash(user.password_hash, password):
-            access_token = create_access_token(user.id)
-            refresh_token = create_refresh_token(user.id)
+            access_token = create_access_token(user.id, additional_claims={"role": user.role})
+            refresh_token = create_refresh_token(user.id, additional_claims={"role": user.role})
             response = {
                 "access_token": access_token,
                 "refresh_token": refresh_token
             }
-            return response, HTTPStatus.ACCEPTED
+            return response, HTTPStatus.OK
 
         # Return error message if the wrong password was provided
         abort(400, msg="Invalid credentials")

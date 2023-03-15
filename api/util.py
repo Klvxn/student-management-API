@@ -1,7 +1,10 @@
 from functools import wraps
 from http import HTTPStatus
+from .models.students import Student
+from .models.teachers import Teacher
 
-from flask_jwt_extended import get_jwt, verify_jwt_in_request
+from flask_restx import abort
+from flask_jwt_extended import get_current_user, get_jwt, verify_jwt_in_request
 
 BLOCKLIST = set()
 
@@ -15,12 +18,11 @@ def admin_required():
         def decorator(*args, **kwargs):
             verify_jwt_in_request()
             claims = get_jwt()
-            if claims.get("ADMIN", None):
+            role = claims.get("role", None)
+            if role == "ADMIN":
                 return fn(*args, **kwargs)
             return {"msg": "Unauthorized access"}, HTTPStatus.FORBIDDEN
-
         return decorator
-
     return wrapper
 
 
@@ -33,11 +35,33 @@ def staff_only():
         def decorator(*args, **kwargs):
             verify_jwt_in_request()
             claims = get_jwt()
-            if claims.get("TEACHER", None):
+            role = claims.get("role", None)
+            if role == "TEACHER":
                 return fn(*args, **kwargs)
             return {"msg": "Only a teacher can access this endpoint"}, HTTPStatus.FORBIDDEN
-
         return decorator
-
     return wrapper
 
+
+def is_student_or_admin(student_id):
+    current_user = get_current_user()
+    claims = get_jwt()
+    user_role = claims.get("role")
+    student = Student.query.get_or_404(student_id)
+    print(current_user, student, user_role)
+    if student == current_user or user_role == "ADMIN":
+        return True
+    else:
+        return False
+
+
+def is_teacher_or_admin(teacher_id):
+    current_user = get_current_user()
+    claims = get_jwt()
+    user_role = claims.get("role")
+    teacher = Teacher.query.get_or_404(teacher_id)
+
+    if teacher == current_user or user_role == "ADMIN":
+        return True
+    else:
+        return False

@@ -1,29 +1,35 @@
 from datetime import timedelta
 
 
-class Default:
+class Base:
 
-    SQLALCHEMY_DATABASE_URI = "sqlite:///db.sqlite3"
+    SQLALCHEMY_DATABASE_URI = "sqlite:///smstest.db"
     JWT_SECRET_KEY = "safe-space"
     SECRET_KEY = "safe-space"
 
 
-class Dev(Default):
+class Dev(Base):
 
     DEBUG = True
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=3)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=7)
 
 
-class Prod(Default):
+class Prod(Base):
 
     DEBUG = False
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=30)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=7)
 
 
+class Test(Base):
+
+    TESTING = True
+    DEBUG = True
+    SQLALCHEMY_DATABASE_URI = "sqlite:///test_base.db"
+
 STAGE = {
     "DEV": Dev,
     "PROD": Prod,
-    "TEST": "TEST"
+    "TEST": Test
 }
