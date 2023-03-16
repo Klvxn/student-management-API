@@ -1,6 +1,7 @@
 import unittest
 
 from werkzeug.security import generate_password_hash
+from flask_jwt_extended import create_access_token
 
 from api import create_app
 from ..database import db
@@ -17,6 +18,7 @@ class TeacherTestCase(unittest.TestCase):
         cls.client = cls.app.test_client()
 
         db.create_all()
+
         Admin(
             email_address="adminuser@admin.com",
             full_name="Test Admin",
@@ -31,16 +33,8 @@ class TeacherTestCase(unittest.TestCase):
         cls.app = None
         cls.client = None
 
-    def get_access_token(self):
-        data = {
-            "email_address": "adminuser@admin.com",
-            "password": "password123"
-        }
-        response = self.client.post("/auth/login/", json=data)
-        return response.json["access_token"]
-
     def generate_auth_header(self):
-        token = self.get_access_token()
+        token = create_access_token(identity=1, additional_claims={"role": "ADMIN"})
         headers = {"Authorization": f"Bearer {token}"}
         return headers
 
@@ -77,4 +71,5 @@ class TeacherTestCase(unittest.TestCase):
     def test_delete_teacher(self):
         headers = self.generate_auth_header()
         response = self.client.delete("teachers/1/", headers=headers)
+        print(response.json)
         assert response.status_code == 204
