@@ -103,6 +103,7 @@ class StudentRetrieveUpdateDelete(Resource):
         Update a student's details
         """
         student = Student.query.get_or_404(student_id)
+        print(student)
         data = student_ns.payload
         student.full_name = data.get("full_name", student.full_name)
         student.email_address = data.get("email_address", student.email_address)

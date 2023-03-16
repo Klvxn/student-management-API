@@ -6,45 +6,45 @@ from ..database import db
 
 class AuthTestCase(unittest.TestCase):
 
-    headers = {"Content-Type": "application/json"}
+    @classmethod
+    def setUpClass(cls):
 
-    def setUpClass(self):
-
-        self.app = create_app("TEST")
-        self.test_app = self.app.app_context()
-        self.test_app.push()
-        self.client = self.app.test_client()
+        cls.app = create_app("TEST")
+        cls.test_app = cls.app.app_context()
+        cls.test_app.push()
+        cls.client = cls.app.test_client()
 
         db.create_all()
+        print("testing")
 
     @classmethod
-    def tearDownClass(self):
+    def tearDownClass(cls):
 
         db.drop_all()
-        self.test_app.pop()
-        self.app = None
-        self.client = None
+        cls.test_app.pop()
+        cls.app = None
+        cls.client = None
 
     def test_admin_sign_up(self):
 
         data = {
             "full_name": "Admin User",
-            "email_address": "adminuser@adimn.com",
+            "email_address": "adminuser@admin.com",
             "password": "password123",
             "confirm_password": "password123",
         }
-        response = self.client.post("/auth/admin/signup/", json=data)
+        response = self.client.post("/admin/signup/", json=data)
         assert response.status_code == 201
 
 
-    # def test_user_login(self):
-    #
-    #     data = {
-    #         "email_address": "adminuser@admin.com",
-    #         "password": "password123"
-    #     }
-    #     response = self.client.post("/auth/login/", json=data)
-    #     print(response.json)
-    #     assert response.status_code == 200
-    #     assert "access_token" in response.json
+    def test_user_login(self):
+
+        data = {
+            "email_address": "adminuser@admin.com",
+            "password": "password123"
+        }
+        response = self.client.post("/auth/login/", json=data)
+        self.token = response.json["access_token"]
+        assert response.status_code == 200
+        assert "access_token" in response.json
 

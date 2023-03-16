@@ -7,7 +7,7 @@ from ..database import db
 from ..models.users import Admin
 
 
-class StudentTestCase(unittest.TestCase):
+class TeacherTestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -44,39 +44,37 @@ class StudentTestCase(unittest.TestCase):
         headers = {"Authorization": f"Bearer {token}"}
         return headers
 
-    def test_create_student(self):
+    def test_create_teacher(self):
         headers = self.generate_auth_header()
         data = {
-            "full_name": "Student One",
-            "email_address": "studentone@gmail.com"
+            "full_name": "Test Teacher",
+            "email_address": "testteacher@gmail.com"
         }
-        response = self.client.post("students/", json=data, headers=headers)
+        response = self.client.post("teachers/", json=data, headers=headers)
         assert response.status_code == 201
-        assert b'"full_name": "Student One"' in response.data
+        assert b'"full_name": "Test Teacher"' in response.data
 
-    def test_get_all_students(self):
+    def test_get_all_teachers(self):
         headers = self.generate_auth_header()
-        response = self.client.get("students/", headers=headers)
-        assert response.status_code == 200
-        print(response.json)
-
-    def test_get_single_students(self):
-        headers = self.generate_auth_header()
-        response = self.client.get("students/1/", headers=headers)
-        print(response.json)
+        response = self.client.get("teachers/", headers=headers)
         assert response.status_code == 200
 
-    def test_update_student(self):
+    def test_get_teacher(self):
+        headers = self.generate_auth_header()
+        response = self.client.get("teachers/1/", headers=headers)
+        print(response.status_code)
+        assert response.status_code == 200
+
+    def test_update_teacher(self):
         headers = self.generate_auth_header()
         data = {
-            "full_name": "Student Two",
-            "email_address": "studenttwo@gmail.com"
+            "full_name": "Test Teacher Toe",
         }
-        response = self.client.put("/students/1/", json=data, headers=headers)
-        print(response.json)
+        response = self.client.put("/teachers/1/", json=data, headers=headers)
+        print(response.status_code)
         assert response.status_code == 200
 
-    def test_delete_student(self):
+    def test_delete_teacher(self):
         headers = self.generate_auth_header()
-        response = self.client.delete("students/1/", headers=headers)
+        response = self.client.delete("teachers/1/", headers=headers)
         assert response.status_code == 204

@@ -18,9 +18,7 @@ admin_model = admin_ns.model(
         "email_address": fields.String(required=True),
     },
 )
-
-
-signup_model = admin_model.model(
+signup_model = admin_ns.model(
     "Sign Up serializer",
     {
         "email_address": fields.String(),
@@ -85,8 +83,9 @@ class AdminRetrieveUpdateDelete(Resource):
         Retrieve a teacher
         """
         admin = Admin.query.get_or_404(admin_id)
+        current_user = get_current_user()
 
-        if not (admin_id):
+        if admin != current_user:
             abort(403, msg="You don't have access to this resource")
 
         return marshal(admin, admin_model), HTTPStatus.OK
@@ -102,6 +101,11 @@ class AdminRetrieveUpdateDelete(Resource):
         Update a teacher
         """
         admin = Admin.query.get_or_404(admin_id)
+        current_user = get_current_user()
+
+        if admin != current_user:
+            abort(403, msg="You don't have access to this resource")
+
         data = admin_ns.payload
         admin.full_name = data.get("full_name", admin.full_name)
         admin.email_address = data.get("email_address", admin.email_address)
@@ -117,5 +121,10 @@ class AdminRetrieveUpdateDelete(Resource):
         Delete a teacher
         """
         admin = Admin.query.get_or_404(admin_id)
+        current_user = get_current_user()
+
+        if admin != current_user:
+            abort(403, msg="You don't have access to this resource")
+
         admin.delete()
         return None, HTTPStatus.NO_CONTENT

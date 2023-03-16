@@ -100,8 +100,8 @@ class CourseRetrieveUpdateDelete(Resource):
         """
         Update a course
         """
-        course = Course.query.get_or_404(course_id)
         data = course_ns.payload
+        course = Course.query.get_or_404(course_id)
         course.title = data.get("title", course.title)
         course.credit_unit = data.get("credit_unit", course.credit_unit)
         course.teacher_id = data.get("teacher_id", course.teacher_id)
