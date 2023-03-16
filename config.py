@@ -1,9 +1,14 @@
+from pathlib import Path
+
 from datetime import timedelta
 
 
+BASE_DIR = Path(__file__).resolve().parent
+
 class Base:
 
-    SQLALCHEMY_DATABASE_URI = "sqlite:///smstest.db"
+    SQLALCHEMY_DATABASE_URI = f"sqlite:///{BASE_DIR}/instance/lol.db"
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
     JWT_SECRET_KEY = "safe-space"
     SECRET_KEY = "safe-space"
 
@@ -26,10 +31,4 @@ class Test(Base):
 
     TESTING = True
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = "sqlite:///test_base.db"
-
-STAGE = {
-    "DEV": Dev,
-    "PROD": Prod,
-    "TEST": Test
-}
+    SQLALCHEMY_DATABASE_URI = f"sqlite:///{BASE_DIR}/instance/test.db"

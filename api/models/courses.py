@@ -1,4 +1,4 @@
-from api.database import db
+from ..database import db
 
 
 enrollment = db.Table(
@@ -10,14 +10,14 @@ enrollment = db.Table(
 
 class Course(db.Model):
 
+    __tablename__ = "course"
+
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(10), nullable=False, unique=True)
     credit_unit = db.Column(db.Integer, nullable=False, default=1)
-    code = db.Column(db.String(6), nullable=False, unique=True)
+    course_code = db.Column(db.String(6), nullable=False, unique=True)
 
-    # one-to-one relationship with teacher model
-    teacher = db.relationship("Teacher", backref="courses", uselist=False)
-    teacher_id = db.Column(db.Integer, db.ForeignKey("teacher.id", ondelete="CASCADE"))
+    teacher_id = db.Column(db.Integer, db.ForeignKey("teacher.id"))
 
     # many-to-many relationship with student model
     students = db.relationship("Student", secondary=enrollment, backref="courses")

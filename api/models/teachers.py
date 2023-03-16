@@ -4,8 +4,12 @@ from ..database import db
 
 class Teacher(User):
 
+    __tablename__ = "teacher"
+
     id = db.Column(db.Integer, primary_key=True)
 
+    # One-to-one relationship with course
+    course = db.relationship("Course", backref="teacher", uselist=False)
 
     def __repr__(self) -> str:
         return f"<Teacher: {self.full_name}>"

@@ -25,7 +25,7 @@ def admin_required():
     return wrapper
 
 
-def staff_only():
+def teacher_only():
     """
     Decorator to protect endpoints meant for only teachers.
     """
@@ -59,7 +59,6 @@ def is_teacher_or_admin(teacher_id):
     claims = get_jwt()
     user_role = claims.get("role")
     teacher = Teacher.query.get_or_404(teacher_id)
-
     if teacher == current_user or user_role == "ADMIN":
         return True
     else:

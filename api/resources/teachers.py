@@ -47,12 +47,10 @@ class TeacherListCreate(Resource):
         if len(name) <= 1:
             error_msg = "Provide your first name and last name"
 
-        # Check if a teacher with the email address already exists
         teacher = Teacher.query.filter_by(email_address=email_address).first()
         if teacher is not None:
             error_msg = f"Teacher with email address: {email_address} already exists"
 
-        # abort if there's error message else create a new teacher with a default password
         if error_msg:
             abort(400, msg=error_msg)
 
@@ -97,8 +95,8 @@ class TeacherRetrieveUpdateDelete(Resource):
         """
         Update a teacher
         """
-        teacher = Teacher.query.get_or_404(teacher_id)
         data = teacher_ns.payload
+        teacher = Teacher.query.get_or_404(teacher_id)
         teacher.full_name = data.get("full_name", teacher.full_name)
         teacher.email_address = data.get("email_address", teacher.email_address)
         teacher.commit_update()

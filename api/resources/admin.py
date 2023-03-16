@@ -64,10 +64,10 @@ class AdminList(Resource):
     @admin_required()
     def get(self):
         """
-        Get all teachers
+        Get all admin users
         """
-        all_teachers = Admin.query.all()
-        return marshal(all_teachers, admin_model), HTTPStatus.OK
+        admins = Admin.query.all()
+        return marshal(admins, admin_model), HTTPStatus.OK
 
 
 @admin_ns.route("/<int:admin_id>/")
@@ -80,7 +80,7 @@ class AdminRetrieveUpdateDelete(Resource):
     @jwt_required()
     def get(self, admin_id):
         """
-        Retrieve a teacher
+        Get an admin
         """
         admin = Admin.query.get_or_404(admin_id)
         current_user = get_current_user()
@@ -98,7 +98,7 @@ class AdminRetrieveUpdateDelete(Resource):
     @admin_required()
     def put(self, admin_id):
         """
-        Update a teacher
+        Update an admin
         """
         admin = Admin.query.get_or_404(admin_id)
         current_user = get_current_user()
@@ -118,7 +118,7 @@ class AdminRetrieveUpdateDelete(Resource):
     @admin_required()
     def delete(self, admin_id):
         """
-        Delete a teacher
+        Delete an admin
         """
         admin = Admin.query.get_or_404(admin_id)
         current_user = get_current_user()

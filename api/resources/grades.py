@@ -8,7 +8,7 @@ from sqlalchemy import exc
 from ..models.courses import Course
 from ..models.grades import Grade
 from ..models.students import Student
-from ..util import staff_only
+from ..util import teacher_only
 
 grade_ns = Namespace("Grade system", "Everything about grading")
 
@@ -35,7 +35,7 @@ class GradeRetrieveUpdate(Resource):
             "course_id": "The ID of the course",
         },
     )
-    @staff_only()
+    @teacher_only()
     def get(self, student_id, course_id):
         """
         Get a student's grade in a course
@@ -57,7 +57,7 @@ class GradeRetrieveUpdate(Resource):
             "course_id": "The ID of the course",
         },
     )
-    @staff_only()
+    @teacher_only()
     def post(self, student_id, course_id):
         """
         Grade a student in a course
@@ -68,10 +68,8 @@ class GradeRetrieveUpdate(Resource):
         student = Student.query.get_or_404(student_id)
         course = Course.query.get_or_404(course_id)
 
-        # Only the course's teacher is allowed to grade a student for the course
         course_teacher = course.teacher
         current_user = get_current_user()
-
 
         if course_teacher != current_user:
             abort(403, "Only the course teacher can perform this action")
@@ -82,9 +80,8 @@ class GradeRetrieveUpdate(Resource):
         if student not in course.students:
             error_msg = "This student did not register for this course"
 
-        # Catch any database error in case the student has already been graded
         try:
-            grade = Grade(student=student, course=course, score=score)
+            grade = Grade(student_id=student_id, course_id=course_id, score=score)
             grade.allocate_letter_grade()
             grade.save()
             response = {
@@ -107,7 +104,7 @@ class GradeRetrieveUpdate(Resource):
             "course_id": "The ID of the course",
         },
     )
-    @staff_only()
+    @teacher_only()
     def put(self, student_id, course_id):
         """
         Update a student's grade in a course

@@ -1,6 +1,6 @@
 from enum import Enum
 
-from api.database import db
+from ..database import db
 
 
 class LetterGrades(Enum):
@@ -13,17 +13,15 @@ class LetterGrades(Enum):
 
 class Grade(db.Model):
 
+    __tablename__ = "grades"
+
     student_id = db.Column(db.Integer, db.ForeignKey("student.id"), primary_key=True)
     course_id = db.Column(db.Integer, db.ForeignKey("course.id"), primary_key=True)
     score = db.Column(db.Float, default=0.0)
     letter_grade = db.Column(db.CHAR(1))
 
-    # relationships between student and course
-    student = db.relationship("Student", backref="grades")
-    course = db.relationship("Course", backref="grade", uselist=False)
-
     def __repr__(self):
-        return f"<Grade: {self.student.full_name} - {self.course.title} - {self.score}>"
+        return f"<Grade: {self.student_id} - {self.course_id} - {self.score}>"
 
     def save(self):
         db.session.add(self)

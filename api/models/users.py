@@ -13,11 +13,13 @@ class User(db.Model):
 
 class Admin(User):
 
+    __tablename__ = "admin"
+
     id = db.Column(db.Integer, primary_key=True, unique=True)
 
 
     def __repr__(self):
-        return f"<Admin: {self.email_address}>"
+        return f"<Admin: {self.full_name}>"
 
     def save(self):
         db.session.add(self)

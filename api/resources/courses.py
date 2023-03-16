@@ -17,7 +17,7 @@ course_model = course_ns.model(
         "id": fields.Integer(),
         "title": fields.String(required=True),
         "credit_unit": fields.Integer(required=True),
-        "code": fields.String(required=True),
+        "course_code": fields.String(required=True),
         "teacher": fields.Nested(teachers.teacher_model, allow_null=True),
     },
 )
@@ -55,7 +55,7 @@ class CourseList(Resource):
         data = course_ns.payload
         title = data["title"]
         credit_unit = data["credit_unit"]
-        code = data["code"]
+        code = data["course_code"]
         teacher_id = data.get("teacher_id")
 
         # Check that a course with the title doesn't already exist and create a new course
@@ -67,7 +67,7 @@ class CourseList(Resource):
         new_course = Course(
             title=title,
             credit_unit=credit_unit,
-            code=code,
+            course_code=code,
             teacher_id=teacher_id
         )
         new_course.save()
@@ -81,7 +81,7 @@ class CourseRetrieveUpdateDelete(Resource):
         params={"course_id": "The ID of the course"},
         description="Retrieve a course and all the students enrolled for that course",
     )
-    @admin_required()
+    @jwt_required()
     def get(self, course_id):
         """
         Retrieve a single course
@@ -137,6 +137,7 @@ class CourseRegister(Resource):
 
         student = Student.get_by_school_id(school_id)
 
+        # To register for multiple courses at once
         if isinstance(course_title, list):
             for title in course_title:
                 course = Course.get_by_title(title)

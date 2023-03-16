@@ -102,9 +102,8 @@ class StudentRetrieveUpdateDelete(Resource):
         """
         Update a student's details
         """
-        student = Student.query.get_or_404(student_id)
-        print(student)
         data = student_ns.payload
+        student = Student.query.get_or_404(student_id)
         student.full_name = data.get("full_name", student.full_name)
         student.email_address = data.get("email_address", student.email_address)
         student.commit_update()
@@ -135,8 +134,6 @@ class StudentCoursesRetrieve(Resource):
         """
         Get a student's registered courses
         """
-
-        # Allow access to the student or admin only
         student = Student.query.get_or_404(student_id)
 
         if not is_student_or_admin(student_id):
@@ -164,11 +161,10 @@ class StudentResultRetrieve(Resource):
         Get a student's result
         """
         student = Student.query.get_or_404(student_id)
-
+        # print(student.grades)
         if not is_student_or_admin(student_id):
             abort(403, msg="You don't access to this resource")
 
-        # Allow access to the student or admin
         results = {}
         course_results = []
 

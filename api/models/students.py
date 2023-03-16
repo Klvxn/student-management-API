@@ -7,9 +7,11 @@ from ..database import db
 
 class Student(User):
 
+    __tablename__ = "student"
+
     id = db.Column(db.Integer, primary_key=True)
     school_id = db.Column(db.String(), index=True, unique=True)
-    gpa = db.Column(db.Float(asdecimal=True), default=0.00)
+    gpa = db.Column(db.Float(asdecimal=True))
 
     def __repr__(self) -> str:
         return f"<Student: {self.full_name}>"

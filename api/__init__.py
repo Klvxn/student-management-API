@@ -4,9 +4,10 @@ from flask_migrate import Migrate
 from flask_restx import Api
 from werkzeug.exceptions import NotFound
 
-from config import STAGE
 from .database import db
 from .models.users import Admin
+from .models.courses import Course, enrollment
+from .models.grades import Grade
 from .models.students import Student
 from .models.teachers import Teacher
 from .resources.auth import auth_ns
@@ -21,15 +22,13 @@ def create_app(stage):
 
     app = Flask(__name__)
 
-    config = STAGE[stage]
-    app.config.from_object(config)
+    app.config.from_object(stage)
 
     db.init_app(app)
     with app.app_context():
         db.create_all()
 
-
-    migrate = Migrate(app, db)
+    migrate = Migrate(app, db, "migrations")
     jwt = JWTManager(app)
 
     authorizations = {
@@ -44,7 +43,7 @@ def create_app(stage):
         app,
         version="0.1",
         title="Student Management API",
-        description="A REST API service for a school's student management system",
+        description="A REST API service for a Altacademy's student management system",
         authorizations=authorizations,
         security="Bearer auth",
         ordered=True,
@@ -65,11 +64,22 @@ def create_app(stage):
 
     @jwt.user_lookup_loader
     def user_lookup_callback(_jwt_header, jwt_data):
-        print(jwt_data)
         identity = jwt_data["sub"]
         role = jwt_data["role"]
         if role == "ADMIN": return Admin.query.get(identity)
         elif role == "TEACHER": return Teacher.query.get(identity)
         else: return Student.query.get(identity)
+
+    @app.shell_context_processor
+    def make_shell_context():
+        return {
+            "db": db,
+            "Admin": Admin,
+            "Student": Student,
+            "Teacher": Teacher,
+            "Course": Course,
+            "Grade": Grade,
+            "enrollment": enrollment
+        }
 
     return app

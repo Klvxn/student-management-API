@@ -49,7 +49,7 @@ class CourseTestCase(unittest.TestCase):
         data = {
             "title": "Frontend Engineering",
             "credit_unit": 3,
-            "code": "FE121"
+            "course_code": "FE121"
         }
         response = self.client.post("courses/", json=data, headers=headers)
         assert response.status_code == 201
@@ -71,7 +71,7 @@ class CourseTestCase(unittest.TestCase):
         headers = self.generate_auth_header()
         data = {
             "credit_unit": 1,
-            "code": "FE101"
+            "course_code": "FE101"
         }
         response = self.client.put("courses/1/", json=data, headers=headers)
         print(response.json)
