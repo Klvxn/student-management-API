@@ -2,11 +2,11 @@ from http import HTTPStatus
 
 from flask import request
 from flask_restx import Namespace, Resource, abort, fields, marshal
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import get_current_user, jwt_required
 from werkzeug.security import generate_password_hash
 
 from ..models.users import Admin
-from ..util import admin_required, is_teacher_or_admin
+from ..util import admin_required
 
 admin_ns = Namespace("Admin", "Admin operations")
 
@@ -29,6 +29,8 @@ signup_model = admin_model.model(
         "confirm_password": fields.String(write_only=True),
     },
 )
+
+
 @admin_ns.route("/signup/")
 class AdminSignUp(Resource):
 
@@ -61,7 +63,6 @@ class AdminSignUp(Resource):
 class AdminList(Resource):
 
     @admin_ns.doc(description="Get all admins")
-    @admin_ns.response(200, "Success")
     @admin_required()
     def get(self):
         """
@@ -85,8 +86,7 @@ class AdminRetrieveUpdateDelete(Resource):
         """
         admin = Admin.query.get_or_404(admin_id)
 
-        # Grant access to teacher or admin
-        if not is_teacher_or_admin(admin_id):
+        if not (admin_id):
             abort(403, msg="You don't have access to this resource")
 
         return marshal(admin, admin_model), HTTPStatus.OK
@@ -94,7 +94,7 @@ class AdminRetrieveUpdateDelete(Resource):
     @admin_ns.marshal_with(admin_model)
     @admin_ns.expect(admin_model)
     @admin_ns.doc(
-        description="Update an admin", params={"teacher_id": "The ID of the admin"}
+        description="Update an admin", params={"admin_id": "The ID of the admin"}
     )
     @admin_required()
     def put(self, admin_id):
@@ -108,7 +108,6 @@ class AdminRetrieveUpdateDelete(Resource):
         admin.commit_update()
         return admin, HTTPStatus.OK
 
-    @admin_ns.response(204, "No content")
     @admin_ns.doc(
         description="Delete an admin", params={"admin_id": "The ID of the admin"}
     )

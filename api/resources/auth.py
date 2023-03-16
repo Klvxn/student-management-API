@@ -65,8 +65,12 @@ class Login(Resource):
 
         # Check the user against the provided password and create access and refresh tokens
         if user and check_password_hash(user.password_hash, password):
-            access_token = create_access_token(user.id, additional_claims={"role": user.role})
-            refresh_token = create_refresh_token(user.id, additional_claims={"role": user.role})
+            access_token = create_access_token(
+                identity=user.id, additional_claims={"role": user.role}
+            )
+            refresh_token = create_refresh_token(
+                identity=user.id, additional_claims={"role": user.role}
+            )
             response = {
                 "access_token": access_token,
                 "refresh_token": refresh_token
@@ -86,7 +90,9 @@ class TokenRefresh(Resource):
         Refresh an expired access token
         """
         current_user = get_current_user()
-        access_token = create_access_token(current_user.id)
+        access_token = create_access_token(
+            identity=current_user.id, additional_claims={"role": current_user.role}
+        )
         response = {"access_token": access_token}
         return response, HTTPStatus.CREATED
 

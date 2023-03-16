@@ -21,8 +21,8 @@ teacher_model = teacher_ns.model(
 
 @teacher_ns.route("/")
 class TeacherListCreate(Resource):
+
     @teacher_ns.doc(description="Get all teachers")
-    @teacher_ns.response(200, "Successful")
     @admin_required()
     def get(self):
         """
@@ -69,6 +69,7 @@ class TeacherListCreate(Resource):
 
 @teacher_ns.route("/<int:teacher_id>/")
 class TeacherRetrieveUpdateDelete(Resource):
+
     @teacher_ns.doc(
         description="Get a single teacher by ID",
         params={"teacher_id": "The ID of the teacher"},
@@ -103,7 +104,6 @@ class TeacherRetrieveUpdateDelete(Resource):
         teacher.commit_update()
         return teacher, HTTPStatus.OK
 
-    @teacher_ns.response(204, "No content")
     @teacher_ns.doc(
         description="Delete a teacher", params={"teacher_id": "The ID of the teacher"}
     )

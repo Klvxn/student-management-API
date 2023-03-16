@@ -8,7 +8,6 @@ from ..models.grades import Grade
 from ..models.students import Student
 from ..util import admin_required, is_student_or_admin
 
-
 student_ns = Namespace("Students", "The student namespace")
 
 student_model = student_ns.model(
@@ -37,8 +36,6 @@ class StudentListCreate(Resource):
 
     @student_ns.doc(description="Create a new student")
     @student_ns.expect(student_model)
-    @student_ns.response(201, "Created")
-    @student_ns.response(400, "Bad request")
     @admin_required()
     def post(self):
         """
@@ -74,7 +71,6 @@ class StudentListCreate(Resource):
         return marshal(new_student, student_model), HTTPStatus.CREATED
 
 
-
 @student_ns.route("/<int:student_id>/")
 class StudentRetrieveUpdateDelete(Resource):
 
@@ -94,7 +90,6 @@ class StudentRetrieveUpdateDelete(Resource):
             abort(403, msg="You don't access to this resource")
 
         return marshal(student, student_model), HTTPStatus.OK
-
 
     @student_ns.marshal_with(student_model)
     @student_ns.expect(student_model)
@@ -134,7 +129,6 @@ class StudentCoursesRetrieve(Resource):
         description="Get a student's registered courses",
         params={"student_id": "The ID of the student"},
     )
-    @student_ns.response(200, "Success")
     @jwt_required()
     def get(self, student_id):
         """
@@ -145,7 +139,7 @@ class StudentCoursesRetrieve(Resource):
         student = Student.query.get_or_404(student_id)
 
         if not is_student_or_admin(student_id):
-            abort (403, msg="You don't access to this resource")
+            abort(403, msg="You don't access to this resource")
 
         data = {
             "student": student.full_name,
@@ -156,11 +150,9 @@ class StudentCoursesRetrieve(Resource):
         return data, HTTPStatus.OK
 
 
-
 @student_ns.route("/<int:student_id>/result/")
 class StudentResultRetrieve(Resource):
 
-    @student_ns.response(200, "Success")
     @student_ns.doc(
         description="Get a student's grade in all courses and their GPA",
         params={"student_id": "The ID of the student"},
@@ -173,7 +165,7 @@ class StudentResultRetrieve(Resource):
         student = Student.query.get_or_404(student_id)
 
         if not is_student_or_admin(student_id):
-            abort (403, msg="You don't access to this resource")
+            abort(403, msg="You don't access to this resource")
 
         # Allow access to the student or admin
         results = {}
@@ -188,4 +180,3 @@ class StudentResultRetrieve(Resource):
         results["GPA"] = student.calculate_student_gpa()
 
         return {"result": results}, HTTPStatus.OK
-

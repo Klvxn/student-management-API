@@ -37,7 +37,6 @@ course_with_enrolled_students = course_model.clone(
 @course_ns.route("/")
 class CourseList(Resource):
 
-    @course_ns.response(200, "Success")
     @admin_required()
     def get(self):
         """
@@ -127,8 +126,6 @@ class CourseRetrieveUpdateDelete(Resource):
 class CourseRegister(Resource):
 
     @course_ns.expect(course_register_model)
-    @course_ns.response(201, "Created")
-    @course_ns.response(400, "Bad request")
     @jwt_required()
     def post(self):
         """

@@ -28,7 +28,6 @@ score_input = grade_ns.model("Score", {"score": fields.Float(required=True)})
 @grade_ns.route("/<int:student_id>/<int:course_id>/")
 class GradeRetrieveUpdate(Resource):
 
-    @grade_ns.response(200, "Success")
     @grade_ns.doc(
         description="Get a student's grade in a particular course",
         params={
@@ -51,9 +50,6 @@ class GradeRetrieveUpdate(Resource):
         return marshal(grade, grade_serializer), HTTPStatus.OK
 
     @grade_ns.expect(score_input)
-    @grade_ns.response(201, "Created")
-    @grade_ns.response(400, "Bad request")
-    @grade_ns.response(403, "Forbidden")
     @grade_ns.doc(
         description="Grade a student in a particular course",
         params={
@@ -104,7 +100,6 @@ class GradeRetrieveUpdate(Resource):
         abort(400, msg=error_msg)
 
     @grade_ns.expect(grade_serializer)
-    @grade_ns.response(200, "Success")
     @grade_ns.doc(
         description="Update a student's grade in a particular course",
         params={

@@ -3,7 +3,6 @@ from http import HTTPStatus
 from .models.students import Student
 from .models.teachers import Teacher
 
-from flask_restx import abort
 from flask_jwt_extended import get_current_user, get_jwt, verify_jwt_in_request
 
 BLOCKLIST = set()
@@ -21,7 +20,7 @@ def admin_required():
             role = claims.get("role", None)
             if role == "ADMIN":
                 return fn(*args, **kwargs)
-            return {"msg": "Unauthorized access"}, HTTPStatus.FORBIDDEN
+            return {"msg": "Admin access only"}, HTTPStatus.FORBIDDEN
         return decorator
     return wrapper
 
