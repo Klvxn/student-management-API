@@ -1,7 +1,12 @@
 from ..database import db
 
+from werkzeug.security import generate_password_hash
+
 
 class User(db.Model):
+    """
+    Base model for all users including students, teachers and admins.
+    """
 
     __abstract__ = True
 
@@ -10,16 +15,13 @@ class User(db.Model):
     password_hash = db.Column(db.String(), nullable=False)
     role = db.Column(db.String(), nullable=False)
 
-
-class Admin(User):
-
-    __tablename__ = "admin"
-
-    id = db.Column(db.Integer, primary_key=True, unique=True)
-
+    def __init__(self, full_name, email_address, password_str):
+        self.full_name = full_name
+        self.email_address = email_address
+        self.password_hash = generate_password_hash(password_str)
 
     def __repr__(self):
-        return f"<Admin: {self.full_name}>"
+        return f"<{__class__.__name__}: {self.full_name}>"
 
     def save(self):
         db.session.add(self)
@@ -32,3 +34,17 @@ class Admin(User):
     def delete(self):
         db.session.delete(self)
         db.session.commit()
+
+
+class Admin(User):
+    """
+    Model for admin users
+    """
+
+    __tablename__ = "admin"
+
+    id = db.Column(db.Integer, primary_key=True, unique=True)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.role = "ADMIN"

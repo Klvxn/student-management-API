@@ -6,6 +6,9 @@ from ..database import db
 
 
 class Student(User):
+    """
+     Model for students
+     """
 
     __tablename__ = "student"
 
@@ -13,21 +16,14 @@ class Student(User):
     school_id = db.Column(db.String(), index=True, unique=True)
     gpa = db.Column(db.Float(asdecimal=True))
 
-    def __repr__(self) -> str:
-        return f"<Student: {self.full_name}>"
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.role = "STUDENT"
 
     def save(self):
         self.school_id = self.generate_school_id()
-        db.session.add(self)
-        db.session.commit()
+        super().save()
 
-    def delete(self):
-        db.session.delete(self)
-        db.session.commit()
-
-    @staticmethod
-    def commit_update():
-        db.session.commit()
 
     @classmethod
     def get_by_school_id(cls, school_id):
@@ -50,11 +46,13 @@ class Student(User):
         """
         grade_points = {"A": 4.00, "B": 3.00, "C": 2.00, "D": 1.00, "F": 0.00}
         total_credit_unit = total_points = 0
+
         for course in self.courses:
             grade = Grade.query.get((self.id, course.id))
             point = grade_points[grade.letter_grade] * course.credit_unit
             total_points += point
             total_credit_unit += course.credit_unit
+
         student_gpa = round(total_points / total_credit_unit, 2)
         self.gpa = student_gpa
         self.commit_update()

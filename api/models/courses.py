@@ -14,13 +14,18 @@ class Course(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(10), nullable=False, unique=True)
-    credit_unit = db.Column(db.Integer, nullable=False, default=1)
     course_code = db.Column(db.String(6), nullable=False, unique=True)
+    credit_unit = db.Column(db.Integer, nullable=False, default=1)
 
     teacher_id = db.Column(db.Integer, db.ForeignKey("teacher.id"))
 
     # many-to-many relationship with student model
     students = db.relationship("Student", secondary=enrollment, backref="courses")
+
+    def __init__(self, title, course_code, credit_unit, **kwargs):
+        self.title = title
+        self.course_code = course_code
+        self.credit_unit = credit_unit
 
     def __repr__(self):
         return f"<Course: {self.title}>"

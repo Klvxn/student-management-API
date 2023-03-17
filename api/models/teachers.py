@@ -3,6 +3,9 @@ from ..database import db
 
 
 class Teacher(User):
+    """
+     Model for teachers
+     """
 
     __tablename__ = "teacher"
 
@@ -11,17 +14,6 @@ class Teacher(User):
     # One-to-one relationship with course
     course = db.relationship("Course", backref="teacher", uselist=False)
 
-    def __repr__(self) -> str:
-        return f"<Teacher: {self.full_name}>"
-
-    def save(self):
-        db.session.add(self)
-        db.session.commit()
-
-    @staticmethod
-    def commit_update():
-        db.session.commit()
-
-    def delete(self):
-        db.session.delete(self)
-        db.session.commit()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.role = "TEACHER"
