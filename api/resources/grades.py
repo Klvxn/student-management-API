@@ -8,7 +8,7 @@ from sqlalchemy import exc
 from ..models.courses import Course
 from ..models.grades import Grade
 from ..models.students import Student
-from ..util import teacher_only
+from ..util import staff_only
 
 grade_ns = Namespace("Grade system", "Everything about grading")
 
@@ -35,7 +35,7 @@ class GradeRetrieveUpdate(Resource):
             "course_id": "The ID of the course",
         },
     )
-    @teacher_only()
+    @staff_only()
     def get(self, student_id, course_id):
         """
         Get a student's grade in a course
@@ -57,7 +57,7 @@ class GradeRetrieveUpdate(Resource):
             "course_id": "The ID of the course",
         },
     )
-    @teacher_only()
+    @staff_only()
     def post(self, student_id, course_id):
         """
         Grade a student in a course
@@ -104,7 +104,7 @@ class GradeRetrieveUpdate(Resource):
             "course_id": "The ID of the course",
         },
     )
-    @teacher_only()
+    @staff_only()
     def put(self, student_id, course_id):
         """
         Update a student's grade in a course

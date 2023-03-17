@@ -5,7 +5,7 @@ from werkzeug.security import generate_password_hash
 
 class User(db.Model):
     """
-    Base model for all users including students, teachers and admins.
+    BaseConfig model for all users including students, teachers and admins.
     """
 
     __abstract__ = True

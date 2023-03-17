@@ -1,5 +1,6 @@
 from functools import wraps
 from http import HTTPStatus
+
 from .models.students import Student
 from .models.teachers import Teacher
 
@@ -25,9 +26,9 @@ def admin_required():
     return wrapper
 
 
-def teacher_only():
+def staff_only():
     """
-    Decorator to protect endpoints meant for only teachers.
+    Decorator to protect endpoints meant for only teachers (staffs).
     """
     def wrapper(fn):
         @wraps(fn)
@@ -35,14 +36,17 @@ def teacher_only():
             verify_jwt_in_request()
             claims = get_jwt()
             role = claims.get("role", None)
-            if role == "TEACHER":
+            if role == "STAFF":
                 return fn(*args, **kwargs)
-            return {"msg": "Only a teacher can access this endpoint"}, HTTPStatus.FORBIDDEN
+            return {"msg": "Staff access only"}, HTTPStatus.FORBIDDEN
         return decorator
     return wrapper
 
 
 def is_student_or_admin(student_id):
+    """
+    Grant access to a student or an admin
+    """
     current_user = get_current_user()
     claims = get_jwt()
     user_role = claims.get("role")
@@ -54,6 +58,9 @@ def is_student_or_admin(student_id):
 
 
 def is_teacher_or_admin(teacher_id):
+    """
+    Grant access to a teacher or an admin
+    """
     current_user = get_current_user()
     claims = get_jwt()
     user_role = claims.get("role")

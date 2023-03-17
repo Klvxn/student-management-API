@@ -16,6 +16,7 @@ from .resources.courses import course_ns
 from .resources.grades import grade_ns
 from .resources.students import student_ns
 from .resources.teachers import teacher_ns
+from .util import BLOCKLIST
 
 
 def create_app(stage):
@@ -43,7 +44,7 @@ def create_app(stage):
         app,
         version="0.1",
         title="Student Management API",
-        description="A REST API service for a Altacademy's student management system",
+        description="A REST API service for Altacademy's student management system",
         authorizations=authorizations,
         security="Bearer auth",
         ordered=True,
@@ -61,6 +62,10 @@ def create_app(stage):
     @api.errorhandler(NotFound)
     def catch_404(error):
         return {"message": "The resource not found."}, 404
+
+    @jwt.token_in_blocklist_loader
+    def check_if_token_in_blocklist(jwt_header, jwt_payload):
+        return jwt_payload["jti"] in BLOCKLIST
 
     @jwt.user_lookup_loader
     def user_lookup_callback(_jwt_header, jwt_data):

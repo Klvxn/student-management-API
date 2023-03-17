@@ -1,33 +1,40 @@
+import os
+from datetime import timedelta
 from pathlib import Path
 
-from datetime import timedelta
+from dotenv import load_dotenv
 
+
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent
 
-class Base:
+class BaseConfig:
 
-    SQLALCHEMY_DATABASE_URI = f"sqlite:///{BASE_DIR}/instance/lol.db"
+    SQLALCHEMY_DATABASE_URI = f"sqlite:///{BASE_DIR}/instance/db.sqlite3"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    JWT_SECRET_KEY = "safe-space"
-    SECRET_KEY = "safe-space"
+    JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "secret-space")
+    SECRET_KEY = os.environ.get("SECRET_KEY")
 
 
-class Dev(Base):
+class Development(BaseConfig):
 
     DEBUG = True
+    ENV = "development"
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=3)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=7)
 
 
-class Prod(Base):
+class Production(BaseConfig):
 
     DEBUG = False
+    ENV = "production"
+    SQLALCHEMY_ECHO = True
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=30)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=7)
 
 
-class Test(Base):
+class Test(BaseConfig):
 
     TESTING = True
     DEBUG = True

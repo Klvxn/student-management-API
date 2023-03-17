@@ -36,18 +36,26 @@ class AdminSignUp(Resource):
         """
         Admin sign up
         """
+        error_msg = None
         data = request.get_json()
         full_name = data["full_name"]
         email_address = data["email_address"]
         password = data["password"]
         confirm_password = data["confirm_password"]
 
+        name = full_name.split()
+        if len(name) <= 1:
+            error_msg = "Provide your first name and last name"
+
         if confirm_password and password == confirm_password:
             new_admin = Admin(full_name, email_address, password_str=password)
             new_admin.save()
             return marshal(new_admin, admin_model), HTTPStatus.CREATED
 
-        abort(400, msg="Invalid password. Check your password and try again")
+        else:
+            error_msg = "Invalid password. Check your password and try again"
+
+        abort(400, msg=error_msg)
 
 
 @admin_ns.route("/")

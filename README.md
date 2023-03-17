@@ -1,7 +1,10 @@
 ## Student Management API
 
-### This is a RESTful API for a student management system. The API allows for the management of student data, including personal information and academic records. It can be used as backend for a student management system or any other application that requires management of student's data.
+### This is a RESTful API for a student management system. The API allows for the management of student data, including personal information and academic records. It can be used as backend for a student management system or any other application that requires management of student's data. <br> <br> 
 
+### Stack
+The API was built using [Python](https://python.org) and the Flask framework along with some extensions especially Flask-Restx, Flask-SQLAlchemy, Flask-JWT-Extended, etc and using SQLite as database.
+ <br> <br>
 ### API Overview <br>
 
 <ul>
@@ -44,26 +47,40 @@ Operations that are open to the students who are the primary users of the API ar
   <li> Grade a student in the course they are registered to. </li>
 </ul>
 </ul>
- 
+<br>  
 
 ### API Documentation & Usage
-A comprehensive and interactive swagger documentation of the API can be accessed at _[https://altacad.pythonanywhere.com](https://altacad.pythonanywhere.com)._ It provides detailed information about all the available endpoints and their parameters. <br> <br>
-To use the API;
+An interactive swagger documentation of the API can be accessed at _[https://altacad.pythonanywhere.com](https://altacad.pythonanywhere.com)._ It provides detailed information about all the available endpoints and their parameters. <br> <br>
+To use the API:
 1. Open your browser to the link above
 2. Create an admin account using the `admin/signup/` endpoint.
-3. Go to the `auth/login/` endpoint and log in using the email address and password you provided upon signing up and an access token and refresh token would be returned </li>
+3. Go to the `auth/login/` endpoint and log in using the email address and password you provided upon signing up. An access token and refresh token would be generated.
 4. Copy the access token, click on the **_Authorize_** tab on the top right and paste the token in this format:
-
-```
-Bearer this12312is98923a9384398random994559ytoken 
-```
+    
+      ```
+      Bearer <JWT access token>
+      ```
 5. Click on **_Authorize_** and then **_Close_**. You are now authorized to carry out any operation. Create account for students, teachers, create courses, update and even delete them. 
+6. When you're done, click on the **__Authorize__** tab and select **__Logout__**
 
 
-You can also test and use the API using tools like Postman, Insomnia etc.
+### Screenshot of the documentation
+
+ ![Sample of the Docs](./images/chrome_screenshot_1679087498874.png)
+
+You can also test and use the API using tools like Postman, Insomnia etc. <br> <br>
+
+### License
+
+This project is licensed under the terms of the MIT license. See [LICENSE](LICENSE) for more information. <br> <br>
 
 ### Conclusion 
-This project was as an exam project from _[Altschool Africa](https://altschoolafrica.com)_ backend engineering track.
 
+This project was given an as exam project by [Altschool Africa School of 
+Engineering](https://altschoolafrica.com/schools/engineering) Backend Engineering track.
 
+It was a great learning experience for me as I got to build my first RESTful API with Flask. The API provides CRUD functionality for managing students data. It also uses JWT authentication and validation to secure the endpoints. I learned how to implement RESTful principles using Flask-Restx namespaces and decorators, how to use Postman to test and document my API requests and responses, and how to deploy my application on [PythonAnywhere](https://pythonanywhere.com).
 
+I would like to thank my tutor Caleb Emelike for his amazing flask lessons and the organizers at Altschool Africa. 
+
+If you have any questions or suggestions about this project, feel free to contact me at [akpulukelvin@gmail.com](mailto:akpulukelvin@gmail.com) or open an issue on GitHub.

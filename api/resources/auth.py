@@ -99,7 +99,9 @@ class TokenRefresh(Resource):
 
 @auth_ns.route("/change-password/")
 class PasswordChange(Resource):
-
+    """
+    Change default password to user password
+    """
     @auth_ns.expect(new_password)
     @jwt_required()
     def post(self):
