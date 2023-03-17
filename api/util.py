@@ -47,7 +47,6 @@ def is_student_or_admin(student_id):
     claims = get_jwt()
     user_role = claims.get("role")
     student = Student.query.get_or_404(student_id)
-    print(current_user, student, user_role)
     if student == current_user or user_role == "ADMIN":
         return True
     else:
