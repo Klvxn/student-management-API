@@ -1,6 +1,5 @@
 from http import HTTPStatus
 
-from flask import request
 from flask_jwt_extended import jwt_required
 from flask_restx import Namespace, Resource, abort, fields, marshal
 
@@ -103,6 +102,7 @@ class CourseRetrieveUpdateDelete(Resource):
         data = course_ns.payload
         course = Course.query.get_or_404(course_id)
         course.title = data.get("title", course.title)
+        course.course_code = data.get("course_code", course.course_code)
         course.credit_unit = data.get("credit_unit", course.credit_unit)
         course.teacher_id = data.get("teacher_id", course.teacher_id)
         course.commit_update()
@@ -171,7 +171,7 @@ class CourseRegister(Resource):
         """
         Unregister a student from a course
         """
-        data = request.get_json()
+        data = course_ns.payload
         course_title = data["course_title"]
         school_id = data["school_id"]
 

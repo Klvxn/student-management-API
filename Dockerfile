@@ -11,6 +11,8 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 
 COPY . .
 
+RUN mkdir "instance"
+
 EXPOSE 8080
 
 CMD ["waitress-serve", "--listen=0.0.0.0:8080", "main:app"]

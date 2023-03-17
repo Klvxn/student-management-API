@@ -3,7 +3,6 @@ from http import HTTPStatus
 from flask import request
 from flask_restx import Namespace, Resource, abort, fields, marshal
 from flask_jwt_extended import get_current_user, jwt_required
-from werkzeug.security import generate_password_hash
 
 from ..models.users import Admin
 from ..util import admin_required
@@ -39,18 +38,12 @@ class AdminSignUp(Resource):
         """
         data = request.get_json()
         full_name = data["full_name"]
-        email = data["email_address"]
+        email_address = data["email_address"]
         password = data["password"]
         confirm_password = data["confirm_password"]
 
         if confirm_password and password == confirm_password:
-            password = generate_password_hash(confirm_password)
-            new_admin = Admin(
-                email_address=email,
-                full_name=full_name,
-                password_hash=password,
-                role="ADMIN"
-            )
+            new_admin = Admin(full_name, email_address, password_str=password)
             new_admin.save()
             return marshal(new_admin, admin_model), HTTPStatus.CREATED
 

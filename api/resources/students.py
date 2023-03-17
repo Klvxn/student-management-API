@@ -2,7 +2,6 @@ from http import HTTPStatus
 
 from flask_jwt_extended import jwt_required
 from flask_restx import Namespace, Resource, abort, fields, marshal
-from werkzeug.security import generate_password_hash
 
 from ..models.grades import Grade
 from ..models.students import Student
@@ -60,13 +59,8 @@ class StudentListCreate(Resource):
         if error_msg:
             abort(400, msg=error_msg)
 
-        new_student = Student(
-            full_name=full_name,
-            email_address=email_address,
-            role="STUDENT"
-        )
         default_password = "password123"
-        new_student.password_hash = generate_password_hash(default_password)
+        new_student = Student(full_name, email_address, default_password)
         new_student.save()
         return marshal(new_student, student_model), HTTPStatus.CREATED
 

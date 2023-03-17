@@ -2,7 +2,6 @@ from http import HTTPStatus
 
 from flask_restx import Namespace, Resource, abort, fields, marshal
 from flask_jwt_extended import jwt_required
-from werkzeug.security import generate_password_hash
 
 from ..models.teachers import Teacher
 from ..util import admin_required, is_teacher_or_admin
@@ -54,13 +53,8 @@ class TeacherListCreate(Resource):
         if error_msg:
             abort(400, msg=error_msg)
 
-        new_teacher = Teacher(
-            full_name=full_name,
-            email_address=email_address,
-            role="TEACHER"
-        )
         default_password = "teacherpassword123"
-        new_teacher.password_hash = generate_password_hash(default_password)
+        new_teacher = Teacher(full_name, email_address, default_password)
         new_teacher.save()
         return marshal(new_teacher, teacher_model), HTTPStatus.CREATED
 
