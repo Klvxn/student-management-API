@@ -1,28 +1,25 @@
-import unittest
-
-from werkzeug.security import generate_password_hash
+from unittest import TestCase
 
 from api import create_app
 from ..database import db
 from ..models.users import Admin
+from ..models.students import Student
+from ..models.courses import Course
 
 
-class CourseTestCase(unittest.TestCase):
+class CourseTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.app = create_app("TEST")
+        cls.app = create_app("config.Test")
         cls.test_app = cls.app.app_context()
         cls.test_app.push()
         cls.client = cls.app.test_client()
 
         db.create_all()
-        Admin(
-            email_address="adminuser@admin.com",
-            full_name="Test Admin",
-            password_hash=generate_password_hash("password123"),
-            role="ADMIN"
-        ).save()
+        Admin("Test Admin", "adminuser@admin.com", password_str="password123").save()
+        Student("Test Student", "teststudent@gmail.com", password_str="password123").save()
+        Course("Backend Engineering", "BE212", 3).save()
 
     @classmethod
     def tearDownClass(cls):
@@ -32,10 +29,7 @@ class CourseTestCase(unittest.TestCase):
         cls.client = None
 
     def get_access_token(self):
-        data = {
-            "email_address": "adminuser@admin.com",
-            "password": "password123"
-        }
+        data = {"email_address": "adminuser@admin.com", "password": "password123"}
         response = self.client.post("/auth/login/", json=data)
         return response.json["access_token"]
 
@@ -44,40 +38,60 @@ class CourseTestCase(unittest.TestCase):
         headers = {"Authorization": f"Bearer {token}"}
         return headers
 
-    def test_create_course(self):
+    def tests_get_all_courses(self):
+        headers = self.generate_auth_header()
+        response = self.client.get("courses/", headers=headers)
+        assert response.status_code == 200
+        assert isinstance(response.json, list)
+
+    def tests_on_single_courses(self):
+        headers = self.generate_auth_header()
+
+        # Get a course
+        response = self.client.get("courses/1/", headers=headers)
+        assert response.status_code == 200
+
+        # Update course
+        data = {"credit_unit": 1, "course_code": "BE500"}
+        response = self.client.put("courses/1/", json=data, headers=headers)
+        assert response.status_code == 200
+        assert b'"course_code": "BE500"' in response.data
+
+        # Delete course
+        response = self.client.delete("courses/1/", headers=headers)
+        assert response.status_code == 204
+
+    def test_create_new_course(self):
         headers = self.generate_auth_header()
         data = {
             "title": "Frontend Engineering",
             "credit_unit": 3,
-            "course_code": "FE121"
+            "course_code": "FE121",
         }
         response = self.client.post("courses/", json=data, headers=headers)
         assert response.status_code == 201
         assert b'"title": "Frontend Engineering"' in response.data
 
-    def test_get_all_courses(self):
+    def test_register_student_for_course(self):
         headers = self.generate_auth_header()
-        response = self.client.get("courses/", headers=headers)
-        assert response.status_code == 200
-        print(response.json)
-
-    def test_get_single_course(self):
-        headers = self.generate_auth_header()
-        response = self.client.get("courses/1/", headers=headers)
-        print(response.json)
-        assert response.status_code == 200
-
-    def test_update_course(self):
-        headers = self.generate_auth_header()
+        student = Student.query.all()[0]
         data = {
-            "credit_unit": 1,
-            "course_code": "FE101"
+            "course_title": "Frontend Engineering",
+            "school_id": f"{student.school_id}",
         }
-        response = self.client.put("courses/1/", json=data, headers=headers)
-        print(response.json)
-        assert response.status_code == 200
+        response = self.client.post("courses/enroll/", json=data, headers=headers)
+        assert response.status_code == 201
+        assert (
+            f"Student: {student.school_id} has registered for Frontend Engineering"
+            in response.json.values()
+        )
 
-    def test_delete_course(self):
+    def test_unregister_student_from_course(self):
         headers = self.generate_auth_header()
-        response = self.client.delete("courses/1/", headers=headers)
+        student = Student.query.get(1)
+        data = {
+            "course_title": "Frontend Engineering",
+            "school_id": f"{student.school_id}",
+        }
+        response = self.client.delete("courses/enroll/", json=data, headers=headers)
         assert response.status_code == 204

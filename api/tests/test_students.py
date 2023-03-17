@@ -1,28 +1,21 @@
-import unittest
+from unittest import TestCase
 
-from werkzeug.security import generate_password_hash
-
-from api import create_app
+from .. import create_app
 from ..database import db
 from ..models.users import Admin
 
 
-class StudentTestCase(unittest.TestCase):
+class StudentTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.app = create_app("TEST")
+        cls.app = create_app("config.Test")
         cls.test_app = cls.app.app_context()
         cls.test_app.push()
         cls.client = cls.app.test_client()
 
         db.create_all()
-        Admin(
-            email_address="adminuser@admin.com",
-            full_name="Test Admin",
-            password_hash=generate_password_hash("password123"),
-            role="ADMIN"
-        ).save()
+        Admin("Test Admin", "testadmin@gmail.com", "password123").save()
 
     @classmethod
     def tearDownClass(cls):
@@ -33,7 +26,7 @@ class StudentTestCase(unittest.TestCase):
 
     def get_access_token(self):
         data = {
-            "email_address": "adminuser@admin.com",
+            "email_address": "testadmin@gmail.com",
             "password": "password123"
         }
         response = self.client.post("/auth/login/", json=data)
@@ -58,25 +51,24 @@ class StudentTestCase(unittest.TestCase):
         headers = self.generate_auth_header()
         response = self.client.get("students/", headers=headers)
         assert response.status_code == 200
-        print(response.json)
+        assert isinstance(response.json, list)
 
-    def test_get_single_students(self):
+    def tests_on_single_student(self):
         headers = self.generate_auth_header()
+
+        # Get a student
         response = self.client.get("students/1/", headers=headers)
-        print(response.json)
         assert response.status_code == 200
 
-    def test_update_student(self):
-        headers = self.generate_auth_header()
+        # Update student
         data = {
             "full_name": "Student Two",
             "email_address": "studenttwo@gmail.com"
         }
-        response = self.client.put("/students/1/", json=data, headers=headers)
-        print(response.json)
+        response = self.client.put("students/1/", json=data, headers=headers)
         assert response.status_code == 200
+        assert b'"full_name": "Student Two"' in response.data
 
-    def test_delete_student(self):
-        headers = self.generate_auth_header()
+        # Delete student:
         response = self.client.delete("students/1/", headers=headers)
         assert response.status_code == 204
