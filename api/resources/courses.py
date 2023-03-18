@@ -1,50 +1,37 @@
 from http import HTTPStatus
 
 from flask_jwt_extended import jwt_required
-from flask_restx import Namespace, Resource, abort, fields, marshal
+from flask_restx import Namespace, Resource, abort, marshal
 
-from . import students, teachers
 from ..models.courses import Course
 from ..models.students import Student
-from ..util import admin_required
+from ..util import admin_required, staff_or_admin_required
+from ..serializers.courses import (
+    course_input_model,
+    course_output_model,
+    course_students_model,
+    course_register_model,
+)
 
 course_ns = Namespace("Courses", "The course namespace")
-
-course_model = course_ns.model(
-    "Course model",
-    {
-        "id": fields.Integer(),
-        "title": fields.String(required=True),
-        "credit_unit": fields.Integer(required=True),
-        "course_code": fields.String(required=True),
-        "teacher": fields.Nested(teachers.teacher_model, allow_null=True),
-    },
-)
-course_register_model = course_ns.model(
-    "Course register model",
-    {
-        "course_title": fields.String(required=True),
-        "school_id": fields.String(required=True),
-    },
-)
-course_with_enrolled_students = course_model.clone(
-    "Course with registered students",
-    {"students": fields.Nested(students.student_model, as_list=True)},
-)
+course_ns.add_model(course_input_model.name, course_input_model)
+course_ns.add_model(course_output_model.name, course_output_model)
+course_ns.add_model(course_students_model.name, course_students_model)
+course_ns.add_model(course_register_model.name, course_register_model)
 
 
 @course_ns.route("/")
 class CourseList(Resource):
 
-    @admin_required()
+    @staff_or_admin_required()
     def get(self):
         """
         Get all available courses
         """
         all_courses = Course.query.all()
-        return marshal(all_courses, course_model), HTTPStatus.OK
+        return marshal(all_courses, course_output_model), HTTPStatus.OK
 
-    @course_ns.expect(course_model)
+    @course_ns.expect(course_input_model, validate=True)
     @course_ns.doc(description="Add a new course")
     @admin_required()
     def post(self):
@@ -61,19 +48,19 @@ class CourseList(Resource):
         course = Course.query.filter_by(title=title).first()
 
         if course is not None:
-            abort(400, msg=f"Course with title: {title} already exists")
+            abort(400, message=f"Course with title: {title} already exists")
 
         new_course = Course(
             title=title,
             credit_unit=credit_unit,
             course_code=code,
-            teacher_id=teacher_id
+            teacher_id=teacher_id,
         )
         new_course.save()
-        return marshal(new_course, course_model), HTTPStatus.CREATED
+        return marshal(new_course, course_output_model), HTTPStatus.CREATED
 
 
-@course_ns.route("/<int:course_id>/")
+@course_ns.route("/<int:course_id>")
 class CourseRetrieveUpdateDelete(Resource):
 
     @course_ns.doc(
@@ -86,14 +73,13 @@ class CourseRetrieveUpdateDelete(Resource):
         Retrieve a single course
         """
         course = Course.query.get_or_404(course_id)
-        return marshal(course, course_with_enrolled_students), HTTPStatus.OK
+        return marshal(course, course_students_model), HTTPStatus.OK
 
-    @course_ns.marshal_with(course_model)
     @course_ns.doc(
         description="Update the details of a course",
         params={"course_id": "The ID of the course"},
     )
-    @course_ns.expect(course_model)
+    @course_ns.expect(course_input_model)
     @admin_required()
     def put(self, course_id):
         """
@@ -106,7 +92,7 @@ class CourseRetrieveUpdateDelete(Resource):
         course.credit_unit = data.get("credit_unit", course.credit_unit)
         course.teacher_id = data.get("teacher_id", course.teacher_id)
         course.commit_update()
-        return course, HTTPStatus.OK
+        return marshal(course, course_output_model), HTTPStatus.OK
 
     @course_ns.doc(
         params={"course_id": "The ID of the course"},
@@ -122,10 +108,10 @@ class CourseRetrieveUpdateDelete(Resource):
         return None, HTTPStatus.NO_CONTENT
 
 
-@course_ns.route("/enroll/")
+@course_ns.route("/enroll")
 class CourseRegister(Resource):
 
-    @course_ns.expect(course_register_model)
+    @course_ns.expect(course_register_model, validate=True)
     @jwt_required()
     def post(self):
         """
@@ -144,7 +130,7 @@ class CourseRegister(Resource):
 
                 # Abort if a student has already registered for the course
                 if student in course.students:
-                    abort(400, msg=f"This student already enrolled for {course.title}")
+                    abort(400, message=f"This student already enrolled for {course.title}")
 
                 course.students.append(student)
                 course.commit_update()
@@ -153,18 +139,15 @@ class CourseRegister(Resource):
             course = Course.get_by_title(course_title)
 
             if student in course.students:
-                abort(400, msg=f"This student already enrolled for {course.title}")
+                abort(400, message=f"This student already enrolled for {course.title}")
 
             course.students.append(student)
             course.commit_update()
 
-        return (
-            {"msg": f"Student: {school_id} has registered for {course_title}"},
-            HTTPStatus.CREATED
-        )
+        msg = {"message": f"Student: {school_id} has registered for {course_title}"}
+        return msg, HTTPStatus.CREATED
 
-
-    @course_ns.expect(course_register_model)
+    @course_ns.expect(course_register_model, validate=True)
     @course_ns.doc(description="Unregister a student from a course")
     @jwt_required()
     def delete(self):
@@ -180,8 +163,8 @@ class CourseRegister(Resource):
 
         # Check that student registered for the course before unregistering
         if student not in course.students:
-            abort(400, msg="This student did not register for this course")
+            abort(400, message="This student did not register for this course")
 
         course.students.remove(student)
         course.commit_update()
-        return {"msg": "Student unregistered."}, HTTPStatus.NO_CONTENT
+        return {"message": "Student unregistered."}, HTTPStatus.NO_CONTENT

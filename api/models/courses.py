@@ -26,6 +26,8 @@ class Course(db.Model):
         self.title = title
         self.course_code = course_code
         self.credit_unit = credit_unit
+        if kwargs:
+            self.teacher_id = kwargs.get("teacher_id")
 
     def __repr__(self):
         return f"<Course: {self.title}>"

@@ -26,7 +26,7 @@ def admin_required():
     return wrapper
 
 
-def staff_only():
+def staff_required():
     """
     Decorator to protect endpoints meant for only teachers (staffs).
     """
@@ -39,6 +39,23 @@ def staff_only():
             if role == "STAFF":
                 return fn(*args, **kwargs)
             return {"msg": "Staff access only"}, HTTPStatus.FORBIDDEN
+        return decorator
+    return wrapper
+
+
+def staff_or_admin_required():
+    """
+    Decorator to grant access to only staffs and admins
+    """
+    def wrapper(fn):
+        @wraps(fn)
+        def decorator(*args, **kwargs):
+            verify_jwt_in_request()
+            claims = get_jwt()
+            role = claims.get("role", None)
+            if role == "STAFF" or role =="ADMIN":
+                return fn(*args, **kwargs)
+            return {"msg": "Staff or admin access only"}, HTTPStatus.FORBIDDEN
         return decorator
     return wrapper
 

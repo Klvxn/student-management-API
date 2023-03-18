@@ -30,7 +30,7 @@ class AuthTestCase(TestCase):
             "email_address": "testadmin@gmail.com",
             "password": "password123"
         }
-        response = self.client.post("/auth/login/", json=data)
+        response = self.client.post("api/v0/auth/login/", json=data)
         assert response.status_code == 200
         assert "access_token" in response.json
         assert "refresh_token" in response.json
@@ -39,6 +39,6 @@ class AuthTestCase(TestCase):
     def test_refresh_access_token(self):
         refresh_token = self.test_login_and_create_tokens()
         headers = {"Authorization": f"Bearer {refresh_token}"}
-        response = self.client.post("auth/token/refresh/", headers=headers)
+        response = self.client.post("api/v0/auth/token/refresh/", headers=headers)
         assert response.status_code == 201
         assert "access_token" in response.json

@@ -1,21 +1,16 @@
 from http import HTTPStatus
 
-from flask_restx import Namespace, Resource, abort, fields, marshal
+from flask_restx import Namespace, Resource, abort, marshal
 from flask_jwt_extended import jwt_required
 
 from ..models.teachers import Teacher
+from ..serializers.users import teacher_model, user_input_model
 from ..util import admin_required, is_teacher_or_admin
 
-teacher_ns = Namespace("Teachers", "The teacher namespace")
 
-teacher_model = teacher_ns.model(
-    "Teacher serializer",
-    {
-        "id": fields.Integer(),
-        "full_name": fields.String(required=True),
-        "email_address": fields.String(required=True),
-    },
-)
+teacher_ns = Namespace("Teachers", "The teacher namespace")
+teacher_ns.add_model(user_input_model.name, user_input_model)
+teacher_ns.add_model(teacher_model.name, teacher_model)
 
 
 @teacher_ns.route("/")
@@ -30,7 +25,7 @@ class TeacherListCreate(Resource):
         all_teachers = Teacher.query.all()
         return marshal(all_teachers, teacher_model), HTTPStatus.OK
 
-    @teacher_ns.expect(teacher_model)
+    @teacher_ns.expect(user_input_model, validate=True)
     @teacher_ns.doc(description="Create a teacher")
     @admin_required()
     def post(self):
@@ -51,7 +46,7 @@ class TeacherListCreate(Resource):
             error_msg = f"Teacher with email address: {email_address} already exists"
 
         if error_msg:
-            abort(400, msg=error_msg)
+            abort(400, message=error_msg)
 
         default_password = "teacherpassword123"
         new_teacher = Teacher(full_name, email_address, default_password)
@@ -59,7 +54,7 @@ class TeacherListCreate(Resource):
         return marshal(new_teacher, teacher_model), HTTPStatus.CREATED
 
 
-@teacher_ns.route("/<int:teacher_id>/")
+@teacher_ns.route("/<int:teacher_id>")
 class TeacherRetrieveUpdateDelete(Resource):
 
     @teacher_ns.doc(
@@ -75,14 +70,14 @@ class TeacherRetrieveUpdateDelete(Resource):
 
         # Grant access to teacher or admin
         if not is_teacher_or_admin(teacher_id):
-            abort(403, msg="You don't have access to this resource")
+            abort(403, message="You don't have access to this resource")
 
         return marshal(teacher, teacher_model), HTTPStatus.OK
 
-    @teacher_ns.marshal_with(teacher_model)
-    @teacher_ns.expect(teacher_model)
+    @teacher_ns.expect(user_input_model)
     @teacher_ns.doc(
-        description="Update a teacher", params={"teacher_id": "The ID of the teacher"}
+        description="Update a teacher",
+        params={"teacher_id": "The ID of the teacher"}
     )
     @admin_required()
     def put(self, teacher_id):
@@ -94,7 +89,7 @@ class TeacherRetrieveUpdateDelete(Resource):
         teacher.full_name = data.get("full_name", teacher.full_name)
         teacher.email_address = data.get("email_address", teacher.email_address)
         teacher.commit_update()
-        return teacher, HTTPStatus.OK
+        return marshal(teacher, teacher_model), HTTPStatus.OK
 
     @teacher_ns.doc(
         description="Delete a teacher", params={"teacher_id": "The ID of the teacher"}

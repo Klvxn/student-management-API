@@ -1,24 +1,17 @@
 from http import HTTPStatus
 
 from flask_jwt_extended import jwt_required
-from flask_restx import Namespace, Resource, abort, fields, marshal
+from flask_restx import Namespace, Resource, abort, marshal
 
 from ..models.grades import Grade
 from ..models.students import Student
+from ..serializers.users import user_input_model, student_model
 from ..util import admin_required, is_student_or_admin
 
-student_ns = Namespace("Students", "The student namespace")
 
-student_model = student_ns.model(
-    "Student model",
-    {
-        "id": fields.Integer(),
-        "school_id": fields.String(read_only=True),
-        "full_name": fields.String(required=True),
-        "email_address": fields.String(required=True),
-        "gpa": fields.Float(read_only=True),
-    },
-)
+student_ns = Namespace("Students", "The student namespace")
+student_ns.add_model(user_input_model.name, user_input_model)
+student_ns.add_model(student_model.name, student_model)
 
 
 @student_ns.route("/")
@@ -34,7 +27,7 @@ class StudentListCreate(Resource):
         return marshal(all_students, student_model), HTTPStatus.OK
 
     @student_ns.doc(description="Create a new student")
-    @student_ns.expect(student_model)
+    @student_ns.expect(user_input_model, validate=True)
     @admin_required()
     def post(self):
         """
@@ -57,7 +50,7 @@ class StudentListCreate(Resource):
 
         # Create a new student and set a default password if no error message else abort
         if error_msg:
-            abort(400, msg=error_msg)
+            abort(400, message=error_msg)
 
         default_password = "password123"
         new_student = Student(full_name, email_address, default_password)
@@ -65,7 +58,7 @@ class StudentListCreate(Resource):
         return marshal(new_student, student_model), HTTPStatus.CREATED
 
 
-@student_ns.route("/<int:student_id>/")
+@student_ns.route("/<int:student_id>")
 class StudentRetrieveUpdateDelete(Resource):
 
     @student_ns.doc(
@@ -81,12 +74,11 @@ class StudentRetrieveUpdateDelete(Resource):
 
         # Allow access to the student or the admin
         if not is_student_or_admin(student_id):
-            abort(403, msg="You don't access to this resource")
+            abort(403, message="You don't access to this resource")
 
         return marshal(student, student_model), HTTPStatus.OK
 
-    @student_ns.marshal_with(student_model)
-    @student_ns.expect(student_model)
+    @student_ns.expect(user_input_model)
     @student_ns.doc(
         description="Update a student's details",
         params={"student_id": "The ID of the student"},
@@ -101,7 +93,7 @@ class StudentRetrieveUpdateDelete(Resource):
         student.full_name = data.get("full_name", student.full_name)
         student.email_address = data.get("email_address", student.email_address)
         student.commit_update()
-        return student, HTTPStatus.OK
+        return marshal(student, student_model), HTTPStatus.OK
 
     @student_ns.doc(
         description="Delete a student", params={"student_id": "The ID of the student"}
@@ -116,7 +108,7 @@ class StudentRetrieveUpdateDelete(Resource):
         return None, HTTPStatus.NO_CONTENT
 
 
-@student_ns.route("/<int:student_id>/courses/")
+@student_ns.route("/<int:student_id>/courses")
 class StudentCoursesRetrieve(Resource):
 
     @student_ns.doc(
@@ -131,7 +123,7 @@ class StudentCoursesRetrieve(Resource):
         student = Student.query.get_or_404(student_id)
 
         if not is_student_or_admin(student_id):
-            abort(403, msg="You don't access to this resource")
+            abort(403, message="You don't access to this resource")
 
         data = {
             "student": student.full_name,
@@ -142,7 +134,7 @@ class StudentCoursesRetrieve(Resource):
         return data, HTTPStatus.OK
 
 
-@student_ns.route("/<int:student_id>/result/")
+@student_ns.route("/<int:student_id>/result")
 class StudentResultRetrieve(Resource):
 
     @student_ns.doc(
@@ -157,7 +149,7 @@ class StudentResultRetrieve(Resource):
         student = Student.query.get_or_404(student_id)
         # print(student.grades)
         if not is_student_or_admin(student_id):
-            abort(403, msg="You don't access to this resource")
+            abort(403, message="You don't access to this resource")
 
         results = {}
         course_results = []

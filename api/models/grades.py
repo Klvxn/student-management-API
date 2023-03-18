@@ -4,11 +4,10 @@ from ..database import db
 
 
 class LetterGrades(Enum):
-    A = range(70, 101)
-    B = range(55, 70)
-    C = range(40, 55)
-    D = range(30, 40)
-    F = range(0, 30)
+    A = range(70, 101)  # 70 - 100
+    B = range(50, 70)   # 50 - 69
+    C = range(30, 50)   # 30 - 49
+    D = range(0, 30)    # 0 - 29
 
 
 class Grade(db.Model):

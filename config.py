@@ -15,6 +15,7 @@ class BaseConfig:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "secret-space")
     SECRET_KEY = os.environ.get("SECRET_KEY")
+    JWT_ERROR_MESSAGE_KEY = "message"
 
 
 class Development(BaseConfig):

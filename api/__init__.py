@@ -48,6 +48,7 @@ def create_app(stage):
         authorizations=authorizations,
         security="Bearer auth",
         ordered=True,
+        prefix="/api/v0/",
         catch_all_404s=True
     )
 
@@ -58,10 +59,9 @@ def create_app(stage):
     api.add_namespace(student_ns, path="/students")
     api.add_namespace(teacher_ns, path="/teachers")
 
-
     @api.errorhandler(NotFound)
     def catch_404(error):
-        return {"message": "The resource not found."}, 404
+        return {"message": "Resource not found."}, 404
 
     @jwt.token_in_blocklist_loader
     def check_if_token_in_blocklist(jwt_header, jwt_payload):
@@ -72,7 +72,7 @@ def create_app(stage):
         identity = jwt_data["sub"]
         role = jwt_data["role"]
         if role == "ADMIN": return Admin.query.get(identity)
-        elif role == "TEACHER": return Teacher.query.get(identity)
+        elif role == "STAFF": return Teacher.query.get(identity)
         else: return Student.query.get(identity)
 
     @app.shell_context_processor

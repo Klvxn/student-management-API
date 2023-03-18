@@ -29,7 +29,7 @@ class StudentTestCase(TestCase):
             "email_address": "testadmin@gmail.com",
             "password": "password123"
         }
-        response = self.client.post("/auth/login/", json=data)
+        response = self.client.post("api/v0/auth/login/", json=data)
         return response.json["access_token"]
 
     def generate_auth_header(self):
@@ -43,13 +43,13 @@ class StudentTestCase(TestCase):
             "full_name": "Student One",
             "email_address": "studentone@gmail.com"
         }
-        response = self.client.post("students/", json=data, headers=headers)
+        response = self.client.post("api/v0/students/", json=data, headers=headers)
         assert response.status_code == 201
         assert b'"full_name": "Student One"' in response.data
 
     def test_get_all_students(self):
         headers = self.generate_auth_header()
-        response = self.client.get("students/", headers=headers)
+        response = self.client.get("api/v0/students/", headers=headers)
         assert response.status_code == 200
         assert isinstance(response.json, list)
 
@@ -57,7 +57,7 @@ class StudentTestCase(TestCase):
         headers = self.generate_auth_header()
 
         # Get a student
-        response = self.client.get("students/1/", headers=headers)
+        response = self.client.get("api/v0/students/1/", headers=headers)
         assert response.status_code == 200
 
         # Update student
@@ -65,10 +65,10 @@ class StudentTestCase(TestCase):
             "full_name": "Student Two",
             "email_address": "studenttwo@gmail.com"
         }
-        response = self.client.put("students/1/", json=data, headers=headers)
+        response = self.client.put("api/v0/students/1/", json=data, headers=headers)
         assert response.status_code == 200
         assert b'"full_name": "Student Two"' in response.data
 
         # Delete student:
-        response = self.client.delete("students/1/", headers=headers)
+        response = self.client.delete("api/v0/students/1/", headers=headers)
         assert response.status_code == 204

@@ -5,7 +5,7 @@ from werkzeug.security import generate_password_hash
 
 class User(db.Model):
     """
-    BaseConfig model for all users including students, teachers and admins.
+    Base model for all users including students, teachers and admins.
     """
 
     __abstract__ = True
@@ -21,7 +21,7 @@ class User(db.Model):
         self.password_hash = generate_password_hash(password_str)
 
     def __repr__(self):
-        return f"<{__class__.__name__}: {self.full_name}>"
+        return f"<{self.__class__.__name__}: {self.full_name}>"
 
     def save(self):
         db.session.add(self)
