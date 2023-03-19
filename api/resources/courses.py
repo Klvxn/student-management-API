@@ -5,7 +5,7 @@ from flask_restx import Namespace, Resource, abort, marshal
 
 from ..models.courses import Course
 from ..models.students import Student
-from ..util import admin_required, staff_or_admin_required
+from ..util import admin_required, is_valid_school_id
 from ..serializers.courses import (
     course_input_model,
     course_output_model,
@@ -23,7 +23,7 @@ course_ns.add_model(course_register_model.name, course_register_model)
 @course_ns.route("/")
 class CourseList(Resource):
 
-    @staff_or_admin_required()
+    @jwt_required()
     def get(self):
         """
         Get all available courses
@@ -121,6 +121,9 @@ class CourseRegister(Resource):
         course_title = data["course_title"]
         school_id = data["school_id"]
 
+        if not is_valid_school_id(school_id):
+            abort(400, message="Invalid school ID")
+
         student = Student.get_by_school_id(school_id)
 
         # To register for multiple courses at once
@@ -157,6 +160,9 @@ class CourseRegister(Resource):
         data = course_ns.payload
         course_title = data["course_title"]
         school_id = data["school_id"]
+
+        if not is_valid_school_id(school_id):
+            abort(400, message="Invalid school ID")
 
         course = Course.get_by_title(course_title)
         student = Student.get_by_school_id(school_id)

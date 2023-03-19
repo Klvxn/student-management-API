@@ -5,8 +5,7 @@ from flask_jwt_extended import jwt_required
 
 from ..models.teachers import Teacher
 from ..serializers.users import teacher_model, user_input_model
-from ..util import admin_required, is_teacher_or_admin
-
+from ..util import admin_required, is_teacher_or_admin, is_valid_email
 
 teacher_ns = Namespace("Teachers", "The teacher namespace")
 teacher_ns.add_model(user_input_model.name, user_input_model)
@@ -32,16 +31,21 @@ class TeacherListCreate(Resource):
         """
         Create a new teacher
         """
-        error_msg = None
         data = teacher_ns.payload
         full_name = data["full_name"]
         email_address = data["email_address"]
+
+        valid = is_valid_email(email_address)
+        if valid != True:
+            abort(400, message=f"Invalid Email address: {valid}")
+
+        error_msg = None
 
         name = full_name.split()
         if len(name) <= 1:
             error_msg = "Provide your first name and last name"
 
-        teacher = Teacher.query.filter_by(email_address=email_address).first()
+        teacher = Teacher.find_by_email(email_address)
         if teacher is not None:
             error_msg = f"Teacher with email address: {email_address} already exists"
 
@@ -51,6 +55,7 @@ class TeacherListCreate(Resource):
         default_password = "teacherpassword123"
         new_teacher = Teacher(full_name, email_address, default_password)
         new_teacher.save()
+        teacher_ns.logger.info(f"Created new Teacher: {new_teacher}")
         return marshal(new_teacher, teacher_model), HTTPStatus.CREATED
 
 
@@ -70,7 +75,7 @@ class TeacherRetrieveUpdateDelete(Resource):
 
         # Grant access to teacher or admin
         if not is_teacher_or_admin(teacher_id):
-            abort(403, message="You don't have access to this resource")
+            abort(403, message="You don't have rights to access this resource")
 
         return marshal(teacher, teacher_model), HTTPStatus.OK
 
@@ -85,6 +90,11 @@ class TeacherRetrieveUpdateDelete(Resource):
         Update a teacher
         """
         data = teacher_ns.payload
+
+        valid = is_valid_email(data.get("email_address"))
+        if valid != True:
+            abort(400, message=f"Invalid Email address: {valid}")
+
         teacher = Teacher.query.get_or_404(teacher_id)
         teacher.full_name = data.get("full_name", teacher.full_name)
         teacher.email_address = data.get("email_address", teacher.email_address)

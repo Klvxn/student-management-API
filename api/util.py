@@ -1,10 +1,15 @@
+import re
 from functools import wraps
 from http import HTTPStatus
+
+from pyisemail import is_email
+from pyisemail.diagnosis import ValidDiagnosis
 
 from .models.students import Student
 from .models.teachers import Teacher
 
 from flask_jwt_extended import get_current_user, get_jwt, verify_jwt_in_request
+
 
 BLOCKLIST = set()
 
@@ -43,23 +48,6 @@ def staff_required():
     return wrapper
 
 
-def staff_or_admin_required():
-    """
-    Decorator to grant access to only staffs and admins
-    """
-    def wrapper(fn):
-        @wraps(fn)
-        def decorator(*args, **kwargs):
-            verify_jwt_in_request()
-            claims = get_jwt()
-            role = claims.get("role", None)
-            if role == "STAFF" or role =="ADMIN":
-                return fn(*args, **kwargs)
-            return {"msg": "Staff or admin access only"}, HTTPStatus.FORBIDDEN
-        return decorator
-    return wrapper
-
-
 def is_student_or_admin(student_id):
     """
     Grant access to a student or an admin
@@ -86,3 +74,15 @@ def is_teacher_or_admin(teacher_id):
         return True
     else:
         return False
+
+
+def is_valid_school_id(school_id):
+    school_id_regex = r'^ALT\/[A-Z]+(?:\d{6})\/(?:2023)$'
+    return re.match(school_id_regex, school_id) is not None
+
+
+def is_valid_email(email):
+    is_valid = is_email(email, diagnose=True)
+    if isinstance(is_valid, ValidDiagnosis):
+        return True
+    return is_valid.message

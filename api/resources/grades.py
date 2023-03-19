@@ -1,15 +1,13 @@
 from http import HTTPStatus
 
-from flask import request
-from flask_jwt_extended import get_current_user
+from flask_jwt_extended import get_current_user, jwt_required
 from flask_restx import Namespace, Resource, abort, marshal
-from sqlalchemy import exc
 
 from ..models.courses import Course
 from ..models.grades import Grade
 from ..models.students import Student
 from ..serializers.grades import grade_model, score_input
-from ..util import staff_required, staff_or_admin_required
+from ..util import staff_required
 
 
 grade_ns = Namespace("Grade system", "Everything about grading")
@@ -27,7 +25,7 @@ class GradeRetrieveUpdate(Resource):
             "course_id": "The ID of the course",
         },
     )
-    @staff_or_admin_required()
+    @jwt_required()
     def get(self, student_id, course_id):
         """
         Get a student's grade in a course
@@ -35,11 +33,13 @@ class GradeRetrieveUpdate(Resource):
         course = Course.query.get_or_404(course_id)
         current_user = get_current_user()
 
-        if current_user != course.teacher or current_user.role != "ADMIN":
-            abort (403, message="Only the course teacher can perform this action")
+        if (course.teacher == current_user) or (current_user.role == "ADMIN"):
+            grade = Grade.query.get_or_404((student_id, course_id))
+            return marshal(grade, grade_model), HTTPStatus.OK
 
-        grade = Grade.query.get_or_404((student_id, course_id))
-        return marshal(grade, grade_model), HTTPStatus.OK
+        else:
+            grade_ns.logger.warn(f"Unauthorized access: {current_user}")
+            abort (403, message="Only the course teacher can perform this action.vv")
 
     @grade_ns.expect(score_input, validate=True)
     @grade_ns.doc(
@@ -54,36 +54,35 @@ class GradeRetrieveUpdate(Resource):
         """
         Grade a student in a course
         """
-        data = request.get_json()
+        data = grade_ns.payload
         score = data["score"]
 
         student = Student.query.get_or_404(student_id)
         course = Course.query.get_or_404(course_id)
 
-        course_teacher = course.teacher
         current_user = get_current_user()
 
-        if course_teacher != current_user:
+        if course.teacher != current_user:
+            grade_ns.logger.warn(f"Unauthorized access: {current_user}")
             abort(403, message="Only the course teacher can perform this action")
-
-        error_msg = None
 
         # Check that the student is registered to the course before grading
         if student not in course.students:
-            error_msg = "This student did not register for this course"
+            abort(400, message="This student did not register for this course")
 
         try:
             grade = Grade(student_id=student_id, course_id=course_id, score=score)
             grade.allocate_letter_grade()
             grade.save()
+            student.calculate_student_gpa()
+            grade_ns.logger.info("Grading student")
             return marshal(grade, grade_model), HTTPStatus.CREATED
 
-        except exc.IntegrityError:
-            error_msg = "This student has already been graded"
+        except Exception as e:
+            grade_ns.logger.error(e)
+            abort(500, message="This student might have already been graded")
 
-        abort(400, message=error_msg)
-
-    @grade_ns.expect(score_input)
+    @grade_ns.expect(score_input, validate=True)
     @grade_ns.doc(
         description="Update a student's grade in a particular course",
         params={
@@ -99,28 +98,16 @@ class GradeRetrieveUpdate(Resource):
         data = grade_ns.payload
 
         course = Course.query.get_or_404(course_id)
+        student = Student.query.get_or_404(student_id)
         current_user = get_current_user()
 
         if course.teacher != current_user:
+            grade_ns.logger.warn(f"Unauthorized access: {current_user}")
             abort(403, message="Only the course teacher can perform this action")
 
         grade = Grade.query.get_or_404((student_id, course_id))
         grade.score = data.get("score", grade.score)
         grade.allocate_letter_grade()
+        student.calculate_student_gpa()
         grade.commit_update()
         return marshal(grade, grade_model), HTTPStatus.OK
-
-    @staff_required()
-    def delete(self, student_id, course_id):
-        """
-        Delete a student's grade in a course
-        """
-        course = Course.query.get_or_404(course_id)
-        current_user = get_current_user()
-
-        if course.teacher != current_user:
-            abort(403, message="Only the course teacher can perform this action")
-
-        grade = Grade.query.get_or_404((student_id, course_id))
-        grade.delete()
-        return None, HTTPStatus.NO_CONTENT

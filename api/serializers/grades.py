@@ -11,4 +11,6 @@ grade_model = Model(
     },
 )
 
-score_input = Model("Score", {"score": fields.Float(required=True)})
+score_input = Model("Score", {
+    "score": fields.Float(required=True, min=0.0, max=100.0)
+})

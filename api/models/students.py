@@ -36,7 +36,7 @@ class Student(User):
         full_name = self.full_name
         first_name = full_name.split()[0]
         hashed_name = hash(full_name)
-        num = abs(hashed_name) % 1000000
+        num = hashed_name % 1000000
         school_id = f"ALT/{first_name.upper()}{num}/{date.today().year}"
         return school_id
 

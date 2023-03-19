@@ -27,7 +27,7 @@ class AdminTestCase(TestCase):
             "email_address": "testadmin@gmail.com",
             "password": "password123"
         }
-        response = self.client.post("api/v0/auth/login/", json=data)
+        response = self.client.post("api/v0/auth/login", json=data)
         return response.json["access_token"]
 
     def generate_auth_header(self):
@@ -42,7 +42,7 @@ class AdminTestCase(TestCase):
             "password": "password123",
             "confirm_password": "password123",
         }
-        response = self.client.post("api/v0/admin/signup/", json=data)
+        response = self.client.post("api/v0/admin/signup", json=data)
         assert response.status_code == 201
         assert b'"full_name": "Admin User"' in response.data
 
@@ -56,7 +56,7 @@ class AdminTestCase(TestCase):
         headers = self.generate_auth_header()
 
         # Get an admin
-        response = self.client.get("api/v0/admin/1/", headers=headers)
+        response = self.client.get("api/v0/admin/1", headers=headers)
         assert response.status_code == 200
 
         # Update admin
@@ -64,13 +64,13 @@ class AdminTestCase(TestCase):
             "full_name": "Admin Two",
             "email_address": "admintwo@gmail.com"
         }
-        response = self.client.put("api/v0/admin/1/", json=data, headers=headers)
+        response = self.client.put("api/v0/admin/1", json=data, headers=headers)
         assert response.status_code == 200
         assert b'"full_name": "Admin Two"' in response.data
         assert b'"email_address": "admintwo@gmail.com"' in response.data
 
         # Delete admin:
-        response = self.client.delete("api/v0/admin/1/", headers=headers)
+        response = self.client.delete("api/v0/admin/1", headers=headers)
         assert response.status_code == 204
 
     # Test that only admins can access the admin endpoints
@@ -81,7 +81,7 @@ class AdminTestCase(TestCase):
             "school_id": student.school_id,
             "password": "password123"
         }
-        response = self.client.post("api/v0/auth/login/", json=data)
+        response = self.client.post("api/v0/auth/login", json=data)
         return response.json["access_token"]
 
     def test_protected_endpoints(self):

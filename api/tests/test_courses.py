@@ -17,6 +17,8 @@ class CourseTestCase(TestCase):
         cls.client = cls.app.test_client()
 
         db.create_all()
+
+        # Create initial data in the database to test with
         Admin("Test Admin", "adminuser@admin.com", password_str="password123").save()
         Student("Test Student", "teststudent@gmail.com", password_str="password123").save()
         Course("Backend Engineering", "BE212", 3).save()
@@ -30,7 +32,7 @@ class CourseTestCase(TestCase):
 
     def get_access_token(self):
         data = {"email_address": "adminuser@admin.com", "password": "password123"}
-        response = self.client.post("api/v0/auth/login/", json=data)
+        response = self.client.post("api/v0/auth/login", json=data)
         return response.json["access_token"]
 
     def generate_auth_header(self):
@@ -48,17 +50,17 @@ class CourseTestCase(TestCase):
         headers = self.generate_auth_header()
 
         # Get a course
-        response = self.client.get("api/v0/courses/1/", headers=headers)
+        response = self.client.get("api/v0/courses/1", headers=headers)
         assert response.status_code == 200
 
         # Update course
         data = {"credit_unit": 1, "course_code": "BE500"}
-        response = self.client.put("api/v0/courses/1/", json=data, headers=headers)
+        response = self.client.put("api/v0/courses/1", json=data, headers=headers)
         assert response.status_code == 200
         assert b'"course_code": "BE500"' in response.data
 
         # Delete course
-        response = self.client.delete("api/v0/courses/1/", headers=headers)
+        response = self.client.delete("api/v0/courses/1", headers=headers)
         assert response.status_code == 204
 
     def test_create_new_course(self):
@@ -79,8 +81,7 @@ class CourseTestCase(TestCase):
             "course_title": "Frontend Engineering",
             "school_id": f"{student.school_id}",
         }
-        response = self.client.post("api/v0/courses/enroll/", json=data, headers=headers)
-        print(response.json)
+        response = self.client.post("api/v0/courses/enroll", json=data, headers=headers)
         assert response.status_code == 201
         assert (
             f"Student: {student.school_id} has registered for Frontend Engineering"
@@ -94,5 +95,5 @@ class CourseTestCase(TestCase):
             "course_title": "Frontend Engineering",
             "school_id": f"{student.school_id}",
         }
-        response = self.client.delete("api/v0/courses/enroll/", json=data, headers=headers)
+        response = self.client.delete("api/v0/courses/enroll", json=data, headers=headers)
         assert response.status_code == 204

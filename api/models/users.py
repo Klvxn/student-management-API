@@ -35,6 +35,10 @@ class User(db.Model):
         db.session.delete(self)
         db.session.commit()
 
+    @classmethod
+    def find_by_email(cls, email_address):
+        return cls.query.filter_by(email_address=email_address).first()
+
 
 class Admin(User):
     """

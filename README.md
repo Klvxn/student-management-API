@@ -57,7 +57,7 @@ The API includes unit tests that evaluates the functionality of the API to ensur
 <li> Updating and deleting a course </li>
 <li> Registering and unregistering a student for a course </li>
 <li> Accessing unauthorized endpoints </li>
-<li> Grading a student in particular course, etc.</li>
+<li> Grading a student in particular course </li>
 <li> Updating a student's grade in a particular course, etc.</li>
 </ul>
 </ul>
@@ -90,7 +90,7 @@ If you want to use and test the API using tools like Postman, Insomnia, Thunderc
 
 So you can start testing with the following endpoints
 
-| Endpoints                         | Method | Description                                                            | Authorization             |
+| Endpoints                         | Method | Description                                                            | Required role             |
 |-----------------------------------|--------|------------------------------------------------------------------------|---------------------------|
 | _/admin/signup_                   | POST   | Creates a new admin account                                            | None                      |
 | _/auth/login_                     | POST   | Creates JWT access and refresh tokens                                  | None                      |
@@ -106,6 +106,48 @@ So you can start testing with the following endpoints
 | _/grade/<student_id>/<course_id>_ | POST   | Grades a student in a course                                           | Staff                     |
 
 These are just some 'demanded' endpoints. You can check out the remaining endpoints in the swagger documentation
+
+<br> 
+
+#### In case you'd like to run the project locally:
+1. Clone the repository
+
+    ```
+    git clone https://github.com/klvxn/student-management-API
+    ```
+
+2. Navigate into the project's root directory
+    ```
+   cd student-management-API
+   ```
+3. Create a virtual environment
+    ```
+   python -m venv venv
+   ```
+4. Activate the virtual environment:
+    * On Windows
+        ```
+      venv\Scripts\activate.bat
+      ```
+    * On Linux/Mac
+        ```
+      source venv/bin/activate
+      ```
+
+3. Update the python package manager and install dependencies
+    ```
+    pip install --upgrade pip
+   
+   pip install -r requirements.txt
+   ```
+4. Start the local server 
+    ```
+   flask --app main --debug run
+   ```
+   
+<br>
+
+You can then access the Swagger documentation via your web browser at `http://127.0.0.1:5000` or using Postman `http://127.0.0.1:5000/api/v0`
 
 <br> 
 

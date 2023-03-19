@@ -1,6 +1,5 @@
 from http import HTTPStatus
 
-from flask import request
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
@@ -15,7 +14,7 @@ from ..models.students import Student
 from ..models.teachers import Teacher
 from ..models.users import Admin
 from ..serializers.auth import  login_model, new_password_input
-from ..util import BLOCKLIST
+from ..util import BLOCKLIST, is_valid_school_id, is_valid_email
 
 
 auth_ns = Namespace("Authentication", "Authentication related operations")
@@ -32,7 +31,7 @@ class Login(Resource):
         """
         Create an access and refresh token
         """
-        data = request.get_json()
+        data = auth_ns.payload
 
         school_id = data.get("school_id")
         email_address = data.get("email_address")
@@ -42,14 +41,17 @@ class Login(Resource):
         if not (school_id or email_address):
             abort(400, message="Provide a school ID or email address")
 
+        user = None
+
         # Get the student if the school ID was provided
-        if school_id:
-            user = Student.get_by_school_id(school_id)
+        if school_id and is_valid_school_id(school_id):
+            student = Student.query.filter_by(school_id=school_id).first()
+            user = student
 
         # Check if the email provided belongs to an admin or teacher
-        else:
-            admin = Admin.query.filter_by(email_address=email_address).first()
-            teacher = Teacher.query.filter_by(email_address=email_address).first()
+        elif email_address and is_valid_email(email_address):
+            admin = Admin.find_by_email(email_address)
+            teacher = Teacher.find_by_email(email_address)
 
             # Return 404 if no teacher or admin with the email address exists
             if not (admin or teacher):
@@ -69,10 +71,12 @@ class Login(Resource):
                 "access_token": access_token,
                 "refresh_token": refresh_token
             }
+            auth_ns.logger.info(f"Logged in user: {user}")
             return response, HTTPStatus.OK
 
-        # Return error message if the wrong password was provided
-        abort(400, message="Invalid credentials")
+        else:
+            # Return error message if the wrong password was provided
+            abort(400, message="Invalid credentials")
 
 
 @auth_ns.route("/token/refresh")
@@ -100,12 +104,13 @@ class PasswordChange(Resource):
     @jwt_required()
     def post(self):
 
-        data = request.get_json()
+        data = auth_ns.payload
         new_password = data["new_password"]
         current_user = get_current_user()
         current_user.password_hash = generate_password_hash(new_password)
         current_user.commit_update()
         msg = {"message": "Password changed successfully"}
+        auth_ns.logger.warn(f"{current_user} has changed password!")
         return msg, HTTPStatus.ACCEPTED
 
 
@@ -119,6 +124,6 @@ class Logout(Resource):
         """
         token = get_jwt()
         jti = token["jti"]
-        token_type = token["type"]
         BLOCKLIST.add(jti)
+        auth_ns.logger.warn("User logged out!")
         return {"message": "Token revoked"}, HTTPStatus.OK

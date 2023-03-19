@@ -6,7 +6,7 @@ from flask_restx import Namespace, Resource, abort, marshal
 from ..models.grades import Grade
 from ..models.students import Student
 from ..serializers.users import user_input_model, student_model
-from ..util import admin_required, is_student_or_admin
+from ..util import admin_required, is_student_or_admin, is_valid_email
 
 
 student_ns = Namespace("Students", "The student namespace")
@@ -36,15 +36,19 @@ class StudentListCreate(Resource):
         data = student_ns.payload
         email_address = data["email_address"]
         full_name = data["full_name"]
-        name = full_name.split()
+
+        # Check if email is valid
+        valid = is_valid_email(email_address)
+        if valid != True:
+            abort(400, message=f"Invalid Email address: {valid}")
 
         error_msg = None
 
+        name = full_name.split()
         if len(name) <= 1:
             error_msg = "Provide your first name and last name"
 
-        # Check if a student with the email address already exists.
-        student = Student.query.filter_by(email_address=email_address).first()
+        student = Student.find_by_email(email_address)
         if student is not None:
             error_msg = f"Student with email address: {email_address} already exists"
 
@@ -55,6 +59,7 @@ class StudentListCreate(Resource):
         default_password = "password123"
         new_student = Student(full_name, email_address, default_password)
         new_student.save()
+        student_ns.logger.info(f"Created new Student: {new_student}")
         return marshal(new_student, student_model), HTTPStatus.CREATED
 
 
@@ -74,7 +79,7 @@ class StudentRetrieveUpdateDelete(Resource):
 
         # Allow access to the student or the admin
         if not is_student_or_admin(student_id):
-            abort(403, message="You don't access to this resource")
+            abort(403, message="You don't have rights to access this resource")
 
         return marshal(student, student_model), HTTPStatus.OK
 
@@ -89,10 +94,16 @@ class StudentRetrieveUpdateDelete(Resource):
         Update a student's details
         """
         data = student_ns.payload
+
+        valid = is_valid_email(data.get("email_address"))
+        if valid != True:
+            abort(400, message=f"Invalid Email address: {valid}")
+
         student = Student.query.get_or_404(student_id)
         student.full_name = data.get("full_name", student.full_name)
         student.email_address = data.get("email_address", student.email_address)
         student.commit_update()
+        student_ns.logger.info(f"Updated Student: {student}")
         return marshal(student, student_model), HTTPStatus.OK
 
     @student_ns.doc(
@@ -123,7 +134,7 @@ class StudentCoursesRetrieve(Resource):
         student = Student.query.get_or_404(student_id)
 
         if not is_student_or_admin(student_id):
-            abort(403, message="You don't access to this resource")
+            abort(403, message="You don't have rights to access this resource")
 
         data = {
             "student": student.full_name,
@@ -147,12 +158,13 @@ class StudentResultRetrieve(Resource):
         Get a student's result
         """
         student = Student.query.get_or_404(student_id)
-        # print(student.grades)
+
         if not is_student_or_admin(student_id):
-            abort(403, message="You don't access to this resource")
+            abort(403, message="You don't have rights to access this resource")
 
         results = {}
         course_results = []
+        student_ns.logger.debug(f"Calculating student: {student.school_id} GPA")
 
         for course in student.courses:
             grade = Grade.query.get((student.id, course.id))

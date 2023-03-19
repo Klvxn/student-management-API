@@ -17,7 +17,7 @@ class Grade(db.Model):
     student_id = db.Column(db.Integer, db.ForeignKey("student.id"), primary_key=True)
     course_id = db.Column(db.Integer, db.ForeignKey("course.id"), primary_key=True)
     score = db.Column(db.Float, default=0.0)
-    letter_grade = db.Column(db.CHAR(1))
+    letter_grade = db.Column(db.CHAR(1), default="D")
 
     def __repr__(self):
         return f"<Grade: {self.student_id} - {self.course_id} - {self.score}>"
@@ -32,6 +32,8 @@ class Grade(db.Model):
 
     def delete(self):
         db.session.delete(self)
+        self.score = 0.0
+        self.letter_grade = "D"
         db.session.commit()
 
     def allocate_letter_grade(self):

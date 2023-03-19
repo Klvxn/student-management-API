@@ -15,6 +15,8 @@ class TeacherTestCase(TestCase):
         cls.client = cls.app.test_client()
 
         db.create_all()
+
+        # Create initial data in the database to test with
         Admin("Test Admin", "testadmin@gmail.com", "password123").save()
 
     @classmethod
@@ -29,7 +31,7 @@ class TeacherTestCase(TestCase):
             "email_address": "testadmin@gmail.com",
             "password": "password123"
         }
-        response = self.client.post("api/v0/auth/login/", json=data)
+        response = self.client.post("api/v0/auth/login", json=data)
         return response.json["access_token"]
 
     def generate_auth_header(self):
@@ -57,7 +59,7 @@ class TeacherTestCase(TestCase):
         headers = self.generate_auth_header()
 
         # Get a teacher
-        response = self.client.get("api/v0/teachers/1/", headers=headers)
+        response = self.client.get("api/v0/teachers/1", headers=headers)
         assert response.status_code == 200
 
         # Update teacher
@@ -65,10 +67,10 @@ class TeacherTestCase(TestCase):
             "full_name": "Teacher Two",
             "email_address": "studenttwo@gmail.com"
         }
-        response = self.client.put("api/v0/teachers/1/", json=data, headers=headers)
+        response = self.client.put("api/v0/teachers/1", json=data, headers=headers)
         assert response.status_code == 200
         assert b'"full_name": "Teacher Two"' in response.data
 
         # Delete teacher:
-        response = self.client.delete("api/v0/teachers/1/", headers=headers)
+        response = self.client.delete("api/v0/teachers/1", headers=headers)
         assert response.status_code == 204

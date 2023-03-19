@@ -25,6 +25,8 @@ def create_app(stage):
 
     app.config.from_object(stage)
 
+    app.logger.info("Starting Student Management System")
+
     db.init_app(app)
     with app.app_context():
         db.create_all()
@@ -49,7 +51,6 @@ def create_app(stage):
         security="Bearer auth",
         ordered=True,
         prefix="/api/v0/",
-        catch_all_404s=True
     )
 
     api.add_namespace(admin_ns, path="/admin")

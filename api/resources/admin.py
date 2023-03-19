@@ -1,13 +1,11 @@
 from http import HTTPStatus
 
-from flask import request
 from flask_restx import Namespace, Resource, abort, marshal
 from flask_jwt_extended import get_current_user
 
 from ..models.users import Admin
 from ..serializers.users import admin_model, signup_model, user_input_model
-from ..util import admin_required
-
+from ..util import admin_required, is_valid_email
 
 admin_ns = Namespace("Admin", "Admin operations")
 admin_ns.add_model(admin_model.name, admin_model)
@@ -23,23 +21,32 @@ class AdminSignUp(Resource):
         """
         Admin sign up
         """
-        data = request.get_json()
+        data = admin_ns.payload
         full_name = data["full_name"]
         email_address = data["email_address"]
         password = data["password"]
         confirm_password = data["confirm_password"]
 
+        valid = is_valid_email(email_address)
+        if valid != True:
+            abort(400, message=f"Invalid Email address: {valid}")
+
+        error_msg = None
+
         name = full_name.split()
         if len(name) <= 1:
-            abort(400, message="Provide your first name and last name")
+            error_msg = "Provide your first name and last name"
 
-        if confirm_password and password == confirm_password:
-            new_admin = Admin(full_name, email_address, password_str=password)
-            new_admin.save()
-            return marshal(new_admin, admin_model), HTTPStatus.CREATED
+        if password != confirm_password:
+            error_msg = "Invalid password. Check your password and try again"
 
-        else:
-            abort(400, message="Invalid password. Check your password and try again")
+        if error_msg:
+            abort(400, error_msg)
+
+        new_admin = Admin(full_name, email_address, password_str=password)
+        new_admin.save()
+        admin_ns.logger.info(f"Created new Admin: {new_admin}")
+        return marshal(new_admin, admin_model), HTTPStatus.CREATED
 
 
 @admin_ns.route("/")
@@ -71,7 +78,8 @@ class AdminRetrieveUpdateDelete(Resource):
         current_user = get_current_user()
 
         if admin != current_user:
-            abort(403, message="You don't have access to this resource")
+            admin_ns.logger.warn(f"Unauthorized access: {current_user}")
+            abort(403, message="You don't have rights to access this resource")
 
         return marshal(admin, admin_model), HTTPStatus.OK
 
@@ -84,13 +92,19 @@ class AdminRetrieveUpdateDelete(Resource):
         """
         Update an admin
         """
+        data = admin_ns.payload
+
         admin = Admin.query.get_or_404(admin_id)
         current_user = get_current_user()
 
         if admin != current_user:
-            abort(403, message="You don't have access to this resource")
+            admin_ns.logger.warn(f"Unauthorized access: {current_user}")
+            abort(403, message="You don't have rights to access this resource")
 
-        data = admin_ns.payload
+        valid = is_valid_email(data.get("email_address"))
+        if valid != True:
+            abort(400, message=f"Invalid Email address: {valid}")
+
         admin.full_name = data.get("full_name", admin.full_name)
         admin.email_address = data.get("email_address", admin.email_address)
         admin.commit_update()
@@ -108,7 +122,8 @@ class AdminRetrieveUpdateDelete(Resource):
         current_user = get_current_user()
 
         if admin != current_user:
-            abort(403, message="You don't have access to this resource")
+            admin_ns.logger.warn(f"Unauthorized access: {current_user}")
+            abort(403, message="You don't have rights to access this resource")
 
         admin.delete()
         return None, HTTPStatus.NO_CONTENT

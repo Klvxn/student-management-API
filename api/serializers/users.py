@@ -24,8 +24,8 @@ signup_model = Model(
     {
         "email_address": fields.String(required=True),
         "full_name": fields.String(required=True),
-        "password": fields.String(write_only=True),
-        "confirm_password": fields.String(write_only=True),
+        "password": fields.String(required=True),
+        "confirm_password": fields.String(required=True),
     },
 )
 
